@@ -8,13 +8,13 @@ export const metadata: Metadata = {
     title: "National Mineral Intelligence Dashboard",
     description: "Integrated national visibility across Guinea's mining sector.",
     type: "website",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "National Mineral Intelligence Dashboard — Republic of Guinea" }],
+    images: [{ url: "/og-v2.png", width: 1200, height: 630, alt: "National Mineral Intelligence Dashboard — Republic of Guinea" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "National Mineral Intelligence Dashboard",
     description: "Integrated national visibility across Guinea's mining sector.",
-    images: ["/og.png"],
+    images: ["/og-v2.png"],
   },
 };
 
