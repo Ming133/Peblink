@@ -275,7 +275,7 @@ function Overview({ onOpen }: { onOpen: (name: string) => void }) {
 function Exploration({ onOpen }: { onOpen: (name: string) => void }) {
   const [activeTab,setActiveTab] = useState<"ranking"|"matrix"|"metadata">("ranking");
   const commodities = ["Bauxite","Iron ore","Gold","Lithium","Nickel","Cobalt","Copper","Graphite","Rare earth elements","Vanadium","Tungsten","Manganese","Other critical minerals"];
-  const layerGroups = [
+  const layerGroups: Array<[string, string[]]> = [
     ["Geological Context",["Bedrock geology","Surficial geology","Lithological units","Faults","Folds","Shear zones","Intrusions","Volcanic belts","Sedimentary basins","Metamorphic belts","Alteration zones","Tectonic structures"]],
     ["Mineral & Element Evidence",["Known mineral occurrences","Historic mines","Historic prospects","Outcrop samples","Rock geochemistry","Soil geochemistry","Stream-sediment geochemistry","Water chemistry","Mineralogical observations","Commodity concentrations"]],
     ["Geophysics & Remote Sensing",["Magnetic anomalies","Gravity anomalies","Radiometric surveys","Electromagnetic surveys","Remote-sensing anomalies","Satellite alteration indicators"]],
