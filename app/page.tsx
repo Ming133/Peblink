@@ -93,11 +93,100 @@ const licenses = [
   ["GUI-REC-118", "Coastal Graphite", "Atlantic Minerals", "Graphite", "Kindia", "Suspended", "54"],
 ];
 
-const targets = [
-  ["01", "Fouta Central", "Lithium", "Level 3", "Strong", "Drill validation"],
-  ["02", "Kankan East", "Gold · Copper", "Level 3", "Strong", "Surface sampling"],
-  ["03", "Forest Belt CM-07", "Nickel · Cobalt", "Level 2", "Moderate", "Geophysical survey"],
-  ["04", "Beyla Ridge", "REE", "Level 2", "Moderate", "Additional mapping"],
+type EvidenceStrength = "Strong" | "Moderate" | "Weak" | "Missing" | "Restricted";
+
+type ExplorationTargetRecord = {
+  id: string;
+  name: string;
+  region: string;
+  coordinates: string;
+  commodities: string[];
+  stage: string;
+  evidenceLevel: 1 | 2 | 3 | 4;
+  evidenceLabel: string;
+  confidence: "Low" | "Moderate" | "High";
+  x: number;
+  y: number;
+  dataYear: number;
+  evidenceTypes: string[];
+  sourceIds: string[];
+  access: "Good" | "Moderate" | "Limited";
+  geologicalSetting: string;
+  knownOccurrences: string;
+  surfaceEvidence: string;
+  geophysicalEvidence: string;
+  drillEvidence: string;
+  coverage: string;
+  lastUpdate: string;
+  missingEvidence: string;
+  limitations: string;
+  recommendation: string;
+  relatedLicenses: string;
+  infrastructure: string;
+  environmentalConstraint: string;
+  favorability: EvidenceStrength;
+  validation: string;
+  scores: [string, number][];
+  matrix: EvidenceStrength[];
+};
+
+type ExplorationSourceRecord = {
+  id: string;
+  agency: string;
+  name: string;
+  publication: string;
+  collection: string;
+  method: string;
+  coordinateSystem: string;
+  precision: string;
+  detectionLimit: string;
+  license: string;
+  access: string;
+  validation: string;
+  confidence: string;
+  reference: string;
+  limitation: string;
+};
+
+type ExplorationLayerItem = { key: string; label: string; sourceId: string };
+
+const explorationSources: ExplorationSourceRecord[] = [
+  { id: "ngs-bedrock", agency: "National Geological Survey", name: "Guinea National Bedrock Compilation", publication: "18 March 2025", collection: "1988–2024", method: "Field mapping and harmonized geological interpretation", coordinateSystem: "WGS 84 / UTM Zone 28N", precision: "1:100,000 national compilation", detectionLimit: "Not applicable — interpreted geology", license: "Government analytical use", access: "Public generalized view", validation: "Validated · 4 legacy boundaries flagged", confidence: "High nationally; moderate in legacy areas", reference: "NGS-GEO-2025-BR-01", limitation: "Legacy sheets use inconsistent lithological classifications and require field verification." },
+  { id: "geo-stream", agency: "National Geological Survey", name: "Regional Stream-Sediment Geochemistry", publication: "14 June 2020", collection: "2017–2019", method: "ICP-MS multi-element assay", coordinateSystem: "WGS 84 / UTM Zone 28N", precision: "±25 metres", detectionLimit: "Ni 0.2 ppm · Co 0.1 ppm · Li 0.5 ppm", license: "Government analytical use", access: "Restricted — aggregated display", validation: "Validated with 3 exceptions", confidence: "Moderate", reference: "NGS-GEO-2020-SS-14", limitation: "Incomplete eastern coverage and inconsistent legacy sample spacing." },
+  { id: "airborne-geo", agency: "Geoscience and Mapping Directorate", name: "National Airborne Geophysics Survey", publication: "09 November 2024", collection: "2022–2024", method: "Magnetic, radiometric and gravity interpretation", coordinateSystem: "WGS 84 geographic", precision: "Flight lines 200–500 metres", detectionLimit: "Survey-specific", license: "Government restricted", access: "Restricted analytical layer", validation: "Validated", confidence: "High", reference: "GMD-AIR-2024-09", limitation: "Resolution decreases in two southern survey blocks." },
+  { id: "drill-archive", agency: "Ministry of Mines and Geology", name: "Historical Drill-Hole and Assay Archive", publication: "Continuous register", collection: "1972–2026", method: "Operator submissions and archive digitization", coordinateSystem: "Mixed; standardized to WGS 84", precision: "±10–250 metres depending on source", detectionLimit: "Varies by laboratory and year", license: "Confidential government record", access: "Restricted", validation: "Partially validated", confidence: "Moderate", reference: "MMG-DRILL-ARCHIVE", limitation: "Many historic logs lack collar-survey metadata, analytical method, or validated assay certificates." },
+  { id: "cadastre", agency: "National Mining Cadastre", name: "License Areas and Status Register", publication: "Daily service", collection: "Current", method: "Authoritative cadastral database", coordinateSystem: "WGS 84 / UTM Zone 28N", precision: "Authoritative license geometry", detectionLimit: "Not applicable", license: "Government record", access: "Public status · restricted documents", validation: "Validated daily", confidence: "High", reference: "NMC-LIVE-LICENSE", limitation: "Pending applications may not include final approved geometry." },
+  { id: "environment", agency: "Environmental Assessment Authority", name: "Protected Areas and Environmental Sensitivity", publication: "22 February 2026", collection: "2020–2026", method: "Protected-area registry, watershed and land-sensitivity overlay", coordinateSystem: "WGS 84 geographic", precision: "50–250 metres", detectionLimit: "Not applicable", license: "Government planning use", access: "Public generalized view", validation: "Validated · community layers partial", confidence: "Moderate", reference: "EAA-ENV-2026-02", limitation: "Community-use and seasonal water-access information is incomplete in several prefectures." },
+];
+
+const explorationLayerGroups: Array<{ name: string; items: ExplorationLayerItem[] }> = [
+  { name: "Analysis Results", items: [{ key: "exploration_targets", label: "Exploration targets", sourceId: "ngs-bedrock" }] },
+  { name: "Geological Context", items: [
+    ["bedrock", "Bedrock geology"], ["surficial", "Surficial geology"], ["lithology", "Lithological units"], ["faults", "Faults"], ["folds", "Folds"], ["shear", "Shear zones"], ["intrusions", "Intrusions"], ["volcanic", "Volcanic belts"], ["basins", "Sedimentary basins"], ["metamorphic", "Metamorphic belts"], ["alteration", "Alteration zones"], ["tectonic", "Tectonic structures"],
+  ].map(([key,label]) => ({ key, label, sourceId: "ngs-bedrock" })) },
+  { name: "Mineral & Element Evidence", items: [
+    ["occurrences", "Known mineral occurrences"], ["historic_mines", "Historic mines"], ["historic_prospects", "Historic prospects"], ["outcrops", "Outcrop samples"], ["rock_geochem", "Rock geochemistry"], ["soil_geochem", "Soil geochemistry"], ["stream_geochem", "Stream-sediment geochemistry"], ["water_chem", "Water chemistry"], ["mineralogy", "Mineralogical observations"], ["concentrations", "Commodity-specific concentrations"],
+  ].map(([key,label]) => ({ key, label, sourceId: "geo-stream" })) },
+  { name: "Geophysics & Remote Sensing", items: [
+    ["magnetic", "Magnetic anomalies"], ["gravity", "Gravity anomalies"], ["radiometric", "Radiometric surveys"], ["electromagnetic", "Electromagnetic surveys"], ["remote", "Remote-sensing anomalies"], ["satellite", "Satellite alteration indicators"],
+  ].map(([key,label]) => ({ key, label, sourceId: "airborne-geo" })) },
+  { name: "Subsurface Evidence", items: [
+    ["drill_holes", "Drill-hole locations"], ["core_logs", "Core-log availability"], ["assay_intervals", "Assay intervals"], ["drill_intercepts", "Drill intercepts"], ["estimated_grade", "Estimated grade"], ["mineralized_thickness", "Mineralized thickness"], ["resource_projects", "Resource-stage projects"],
+  ].map(([key,label]) => ({ key, label, sourceId: "drill-archive" })) },
+  { name: "Constraints & Access", items: [
+    ["roads", "Roads"], ["rail", "Rail"], ["ports", "Ports"], ["energy", "Energy infrastructure"], ["licenses", "License areas"], ["land", "Land status"], ["protected", "Protected areas"], ["communities", "Communities"], ["water", "Water access"], ["environmental", "Environmental sensitivity"],
+  ].map(([key,label]) => ({ key, label, sourceId: ["licenses"].includes(key) ? "cadastre" : "environment" })) },
+];
+
+const defaultExplorationLayers = new Set(["bedrock", "occurrences", "stream_geochem", "drill_holes", "exploration_targets"]);
+
+const explorationTargets: ExplorationTargetRecord[] = [
+  { id: "CM-01", name: "Fouta Central", region: "Labé", coordinates: "11.30° N, 12.29° W", commodities: ["Lithium"], stage: "Advanced exploration", evidenceLevel: 3, evidenceLabel: "Drill Supported", confidence: "High", x: 47, y: 29, dataYear: 2025, evidenceTypes: ["Geology", "Geochemistry", "Geophysics", "Drilling"], sourceIds: ["ngs-bedrock", "geo-stream", "airborne-geo", "drill-archive"], access: "Good", geologicalSetting: "Pegmatite-bearing granitic corridor within a mapped structural intersection.", knownOccurrences: "Two historic pegmatite occurrences within 12 km.", surfaceEvidence: "Lithium-bearing rock-chip and soil anomalies across three traverses.", geophysicalEvidence: "Radiometric contrast and interpreted structural lineament.", drillEvidence: "Six drill holes; three contain repeated mineralized intervals requiring validation.", coverage: "82% of target area", lastUpdate: "18 May 2025", missingEvidence: "Validated density measurements and modern mineralogical characterization.", limitations: "Assay certificates for two historic holes remain under review.", recommendation: "Drill validation", relatedLicenses: "GUI-EXP-027 · GUI-EXP-071", infrastructure: "Road 18 km · substation 41 km · rail 64 km", environmentalConstraint: "Low — watershed buffer review required", favorability: "Strong", validation: "Validated with two assay exceptions", scores: [["Geological favorability",88],["Mineral evidence",82],["Subsurface evidence",74],["Infrastructure access",79],["Metadata completeness",82]], matrix: ["Strong","Moderate","Strong","Moderate","Moderate","Strong","Missing","Strong"] },
+  { id: "CM-02", name: "Kankan East", region: "Kankan", coordinates: "10.12° N, 9.34° W", commodities: ["Gold", "Copper"], stage: "Advanced exploration", evidenceLevel: 3, evidenceLabel: "Drill Supported", confidence: "High", x: 71, y: 49, dataYear: 2024, evidenceTypes: ["Geology", "Geochemistry", "Geophysics", "Drilling"], sourceIds: ["ngs-bedrock", "geo-stream", "airborne-geo", "drill-archive"], access: "Good", geologicalSetting: "Shear-hosted mineralized corridor near a granitic contact.", knownOccurrences: "Historic gold workings and copper-bearing float recorded locally.", surfaceEvidence: "Strong gold-in-soil anomaly with supporting copper pathfinders.", geophysicalEvidence: "Magnetic break and electromagnetic conductor coincide with surface trend.", drillEvidence: "Four historic holes; one mineralized interval is supported by partial assay records.", coverage: "76% of target area", lastUpdate: "03 December 2024", missingEvidence: "Complete drill logs, QA/QC records and down-hole surveys.", limitations: "Historic coordinate precision varies from 25 to 120 metres.", recommendation: "Surface sampling", relatedLicenses: "GUI-EXP-001 · GUI-EXP-094", infrastructure: "National road 11 km · power 33 km", environmentalConstraint: "Medium — seasonal river crossing", favorability: "Strong", validation: "Under geological review", scores: [["Geological favorability",84],["Mineral evidence",86],["Subsurface evidence",61],["Infrastructure access",83],["Metadata completeness",76]], matrix: ["Strong","Strong","Strong","Moderate","Moderate","Moderate","Missing","Strong"] },
+  { id: "CM-07", name: "Forest Belt CM-07", region: "Nzérékoré", coordinates: "7.76° N, 8.82° W", commodities: ["Nickel", "Cobalt"], stage: "Early exploration", evidenceLevel: 2, evidenceLabel: "Surface Supported", confidence: "Moderate", x: 56, y: 72, dataYear: 2019, evidenceTypes: ["Geology", "Geochemistry", "Geophysics"], sourceIds: ["ngs-bedrock", "geo-stream", "airborne-geo", "environment"], access: "Moderate", geologicalSetting: "Mapped ultramafic lithology within a regionally deformed greenstone corridor.", knownOccurrences: "One historic nickel occurrence 9 km north-west.", surfaceEvidence: "Moderate Ni–Co stream-sediment anomaly and two mineralized outcrops.", geophysicalEvidence: "Regional magnetic anomaly follows the mapped ultramafic unit.", drillEvidence: "No validated drill-hole, core-log or assay interval records.", coverage: "58% of target area", lastUpdate: "21 August 2019", missingEvidence: "Modern drilling, complete geochemical coverage and analytical metadata.", limitations: "Eastern coverage is incomplete and 11% of samples lack analytical metadata.", recommendation: "Geophysical survey", relatedLicenses: "GUI-EXP-071", infrastructure: "Road 24 km · rail 46 km · substation 73 km", environmentalConstraint: "High — watershed and community-use overlap", favorability: "Strong", validation: "Validated regional interpretation", scores: [["Geological favorability",78],["Mineral evidence",64],["Subsurface evidence",18],["Infrastructure access",71],["Metadata completeness",58]], matrix: ["Strong","Moderate","Moderate","Strong","Moderate","Missing","Missing","Moderate"] },
+  { id: "CM-11", name: "Beyla Ridge", region: "Nzérékoré", coordinates: "8.68° N, 8.65° W", commodities: ["Rare earth elements"], stage: "Reconnaissance", evidenceLevel: 2, evidenceLabel: "Surface Supported", confidence: "Moderate", x: 68, y: 78, dataYear: 2021, evidenceTypes: ["Geology", "Geochemistry", "Remote sensing"], sourceIds: ["ngs-bedrock", "geo-stream", "airborne-geo", "environment"], access: "Limited", geologicalSetting: "Alkaline intrusive complex with satellite-derived alteration signatures.", knownOccurrences: "No confirmed REE occurrence; two regional mineralogical observations.", surfaceEvidence: "Weak-to-moderate rare-earth pathfinder anomaly in stream sediment.", geophysicalEvidence: "Strong radiometric response with moderate spatial resolution.", drillEvidence: "No drilling records available.", coverage: "63% of target area", lastUpdate: "12 October 2021", missingEvidence: "Mineralogical confirmation, detailed mapping and drilling.", limitations: "Regional sampling density is too low for target-scale conclusions.", recommendation: "Additional mapping", relatedLicenses: "No active overlap · GUI-APP-042 nearby", infrastructure: "Seasonal road 39 km · no grid connection", environmentalConstraint: "Medium — forest-use consultation required", favorability: "Moderate", validation: "Interpretation requires field verification", scores: [["Geological favorability",69],["Mineral evidence",43],["Subsurface evidence",0],["Infrastructure access",38],["Metadata completeness",63]], matrix: ["Moderate","Weak","Moderate","Weak","Strong","Missing","Missing","Moderate"] },
+  { id: "CM-14", name: "Boké Plateau North", region: "Boké", coordinates: "11.16° N, 14.08° W", commodities: ["Bauxite", "Manganese"], stage: "Appraised project area", evidenceLevel: 4, evidenceLabel: "Appraised or Resource Stage", confidence: "High", x: 26, y: 23, dataYear: 2026, evidenceTypes: ["Geology", "Geochemistry", "Drilling", "Resource appraisal"], sourceIds: ["ngs-bedrock", "drill-archive", "cadastre", "environment"], access: "Good", geologicalSetting: "Lateritic plateau developed over mapped mafic basement.", knownOccurrences: "Multiple mapped bauxite occurrences and historical pits.", surfaceEvidence: "Continuous lateritic profile supported by mapping and channel sampling.", geophysicalEvidence: "Terrain and radiometric data support plateau continuity.", drillEvidence: "Repeated drilling, validated core logs and resource-stage documentation.", coverage: "94% of target area", lastUpdate: "07 July 2026", missingEvidence: "Independent reconciliation of two operator resource models.", limitations: "Resource figures remain confidential and are shown only as evidence category.", recommendation: "Data verification", relatedLicenses: "GUI-MIN-014 · GUI-EXP-122", infrastructure: "Haul road 4 km · rail 16 km · port 52 km", environmentalConstraint: "Medium — downstream water monitoring", favorability: "Strong", validation: "Resource documentation under review", scores: [["Geological favorability",92],["Mineral evidence",90],["Subsurface evidence",91],["Infrastructure access",94],["Metadata completeness",87]], matrix: ["Strong","Strong","Strong","Moderate","Moderate","Strong","Strong","Strong"] },
+  { id: "CM-18", name: "Kindia Graphite Corridor", region: "Kindia", coordinates: "10.01° N, 12.88° W", commodities: ["Graphite"], stage: "Concept generation", evidenceLevel: 1, evidenceLabel: "Speculative", confidence: "Low", x: 40, y: 53, dataYear: 2018, evidenceTypes: ["Geology", "Remote sensing"], sourceIds: ["ngs-bedrock", "airborne-geo", "cadastre"], access: "Moderate", geologicalSetting: "Graphitic metasedimentary units interpreted from legacy mapping.", knownOccurrences: "One unverified historic graphite mention.", surfaceEvidence: "No validated modern surface samples.", geophysicalEvidence: "Regional electromagnetic conductor; source is not uniquely interpreted.", drillEvidence: "No drilling records available.", coverage: "41% of target area", lastUpdate: "09 April 2018", missingEvidence: "Field mapping, mineralogical confirmation, sampling and all subsurface evidence.", limitations: "Interpretation relies on legacy mapping and a non-unique geophysical response.", recommendation: "Desktop review", relatedLicenses: "GUI-REC-118 nearby", infrastructure: "Road 19 km · grid 31 km", environmentalConstraint: "Low — preliminary screening only", favorability: "Moderate", validation: "Low-confidence interpretation", scores: [["Geological favorability",55],["Mineral evidence",18],["Subsurface evidence",0],["Infrastructure access",68],["Metadata completeness",41]], matrix: ["Moderate","Weak","Missing","Moderate","Weak","Missing","Missing","Weak"] },
 ];
 
 const moduleSpecs: Record<Exclude<PageKey, "overview" | "exploration" | "licenses">, {
@@ -485,54 +574,265 @@ function Overview() {
   );
 }
 
-function Exploration({ onOpen }: { onOpen: (name: string) => void }) {
-  const [activeTab,setActiveTab] = useState<"ranking"|"matrix"|"metadata">("ranking");
+type ExplorationReadout = {
+  name: string;
+  type: string;
+  detail: string;
+  coordinates: string;
+  source: string;
+  updated: string;
+  validation: string;
+};
+
+function InteractiveExplorationMap({
+  targets,
+  selectedTargetId,
+  onSelectTarget,
+  activeLayers,
+  onToggleLayer,
+  onSelectSource,
+  opacity,
+  onOpacityChange,
+}: {
+  targets: ExplorationTargetRecord[];
+  selectedTargetId: string;
+  onSelectTarget: (id: string) => void;
+  activeLayers: Set<string>;
+  onToggleLayer: (key: string, sourceId: string) => void;
+  onSelectSource: (sourceId: string) => void;
+  opacity: number;
+  onOpacityChange: (opacity: number) => void;
+}) {
+  const [zoom, setZoom] = useState(1);
+  const [showLayers, setShowLayers] = useState(false);
+  const [hovered, setHovered] = useState<ExplorationReadout | null>(null);
+  const [basemapIndex, setBasemapIndex] = useState(0);
+  const basemaps = ["Geology", "Terrain", "Muted"] as const;
+  const basemap = basemaps[basemapIndex];
+  const selectedTarget = explorationTargets.find(target => target.id === selectedTargetId) || explorationTargets[0];
+  const activeCount = activeLayers.size;
+  const geologicalActive = ["bedrock","surficial","lithology","intrusions","volcanic","basins","metamorphic","alteration"].some(key => activeLayers.has(key));
+  const structureActive = ["faults","folds","shear","tectonic"].some(key => activeLayers.has(key));
+  const geochemistryActive = ["rock_geochem","soil_geochem","stream_geochem","water_chem","mineralogy","concentrations"].some(key => activeLayers.has(key));
+  const geophysicsActive = ["magnetic","gravity","radiometric","electromagnetic","remote","satellite"].some(key => activeLayers.has(key));
+  const drillActive = ["drill_holes","core_logs","assay_intervals","drill_intercepts","estimated_grade","mineralized_thickness","resource_projects"].some(key => activeLayers.has(key));
+  const accessActive = ["roads","rail","ports","energy","licenses","land","protected","communities","water","environmental"].some(key => activeLayers.has(key));
+
+  const changeZoom = (amount: number) => setZoom(current => Math.min(2, Math.max(0.8, Number((current + amount).toFixed(1)))));
+  const showReadout = (item: ExplorationReadout) => setHovered(item);
+  const clearReadout = () => setHovered(null);
+  const exportMapImage = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1400;
+    canvas.height = 800;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    const backgrounds = ["#e6e8e3", "#dce5da", "#edf0f1"];
+    context.fillStyle = backgrounds[basemapIndex];
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.strokeStyle = "#9ba9a3";
+    context.lineWidth = 1;
+    for (let x = 80; x < canvas.width; x += 100) { context.beginPath(); context.moveTo(x, 100); context.lineTo(x, 730); context.stroke(); }
+    for (let y = 130; y < 730; y += 80) { context.beginPath(); context.moveTo(60, y); context.lineTo(1340, y); context.stroke(); }
+    context.fillStyle = basemapIndex === 0 ? "#cfc7b5" : basemapIndex === 1 ? "#bdcdb8" : "#d6dcde";
+    context.beginPath();
+    context.moveTo(120, 235); context.lineTo(275, 130); context.lineTo(500, 155); context.lineTo(675, 225); context.lineTo(905, 185); context.lineTo(1195, 330); context.lineTo(1110, 515); context.lineTo(1205, 650); context.lineTo(925, 700); context.lineTo(685, 625); context.lineTo(430, 710); context.lineTo(230, 590); context.lineTo(105, 430); context.closePath(); context.fill();
+    context.fillStyle = "#102a43";
+    context.font = "bold 30px Georgia";
+    context.fillText("National Multi-layer Exploration Evidence Map", 55, 58);
+    context.font = "17px Arial";
+    context.fillStyle = "#536977";
+    context.fillText(`${basemap} basemap · ${activeCount} visible layers · ${targets.length} matching targets`, 55, 88);
+    if (activeLayers.has("exploration_targets")) targets.forEach(target => {
+      const colors = ["#bfb4c9", "#a98295", "#6941a5", "#315f50"];
+      const x = 70 + (target.x / 100) * 1260;
+      const y = 105 + (target.y / 100) * 590;
+      context.fillStyle = colors[target.evidenceLevel - 1];
+      context.beginPath(); context.arc(x, y, 13, 0, Math.PI * 2); context.fill();
+      context.fillStyle = "#263f50"; context.font = "bold 16px Arial"; context.fillText(target.name, x + 20, y - 3);
+      context.fillStyle = "#667b88"; context.font = "13px Arial"; context.fillText(`${target.commodities.join(" · ")} · Level ${target.evidenceLevel}`, x + 20, y + 16);
+    });
+    context.fillStyle = "#ffffffdd"; context.fillRect(45, 742, 1310, 38);
+    context.fillStyle = "#657684"; context.font = "14px Arial"; context.fillText("Demonstration data only · Targets indicate evidence for further investigation, not confirmed deposits.", 62, 767);
+    canvas.toBlob(blob => { if (!blob) return; const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "national-exploration-evidence-map.png"; link.click(); URL.revokeObjectURL(link.href); }, "image/png");
+  };
+
+  return (
+    <div className="exploration-map-workspace">
+      <div className="exploration-map-toolbar">
+        <button className={`exploration-layer-button ${showLayers ? "active" : ""}`} onClick={() => setShowLayers(value => !value)} aria-expanded={showLayers}><span>☷</span> Evidence layers <b>{activeCount}</b></button>
+        <label className="exploration-opacity-control"><span>Layer opacity</span><input type="range" min="25" max="100" value={Math.round(opacity * 100)} onChange={event => onOpacityChange(Number(event.target.value) / 100)} /><b>{Math.round(opacity * 100)}%</b></label>
+        <span className="exploration-result-count"><b>{targets.length}</b> targets match current filters</span>
+        <button className="exploration-map-action" onClick={() => setBasemapIndex(index => (index + 1) % basemaps.length)}>Basemap: {basemap}⌄</button><button className="exploration-map-action" onClick={exportMapImage}>↗ Export map</button>
+      </div>
+
+      <div className={`exploration-map-stage-v2 basemap-${basemap.toLowerCase()}`}>
+        <div className="exploration-zoom-tools">
+          <button onClick={() => changeZoom(.2)} disabled={zoom >= 2} aria-label="Zoom exploration map in">＋</button>
+          <button onClick={() => changeZoom(-.2)} disabled={zoom <= .8} aria-label="Zoom exploration map out">−</button>
+          <button onClick={() => setZoom(1)} aria-label="Reset exploration map zoom">⌂</button>
+          <span>{Math.round(zoom * 100)}%</span>
+        </div>
+        <div className="exploration-demo-badge"><i /> DEMONSTRATION GEOLOGY</div>
+
+        <div className={`exploration-layer-drawer ${showLayers ? "open" : ""}`}>
+          <div className="exploration-layer-drawer-head"><div><b>Evidence layers</b><span>{activeCount} visible · click ⓘ for source</span></div><button onClick={() => setShowLayers(false)} aria-label="Close evidence layers">×</button></div>
+          <div className="exploration-layer-drawer-scroll">
+            {explorationLayerGroups.map((group, groupIndex) => {
+              const groupCount = group.items.filter(item => activeLayers.has(item.key)).length;
+              return <details key={group.name} open={groupIndex < 3}><summary><span>{group.name}</span><b>{groupCount}/{group.items.length}</b></summary><div>{group.items.map(item => <label key={item.key}><input type="checkbox" checked={activeLayers.has(item.key)} onChange={() => onToggleLayer(item.key, item.sourceId)} /><span>{item.label}</span><button type="button" onClick={event => { event.preventDefault(); onSelectSource(item.sourceId); }} aria-label={`View source for ${item.label}`}>ⓘ</button></label>)}</div></details>;
+            })}
+          </div>
+        </div>
+
+        <div className="exploration-map-canvas-v2" style={{ transform: `scale(${zoom})` }}>
+          <div className="exploration-country-v2" />
+          {geologicalActive && <div className="exploration-geology-overlays" style={{ opacity }}><i className="geology-v2-unit unit-a"/><i className="geology-v2-unit unit-b"/><i className="geology-v2-unit unit-c"/><i className="geology-v2-unit unit-d"/></div>}
+          {structureActive && <div className="exploration-structure-overlays" style={{ opacity }}><i className="structure-v2-line structure-a"/><i className="structure-v2-line structure-b"/><i className="structure-v2-line structure-c"/></div>}
+          {geochemistryActive && <div className="exploration-geochem-overlays" style={{ opacity }}><button className="geochem-v2-spot geochem-a" aria-label="Lithium geochemical anomaly" onMouseEnter={() => showReadout({name:"Fouta lithium anomaly",type:"Stream-sediment geochemistry",detail:"Li pathfinder index: 82 · demonstration value",coordinates:"11.24° N, 12.36° W",source:"Regional Stream-Sediment Geochemistry",updated:"2020",validation:"Validated with exceptions"})} onMouseLeave={clearReadout}/><button className="geochem-v2-spot geochem-b" aria-label="Gold copper geochemical anomaly" onMouseEnter={() => showReadout({name:"Kankan Au–Cu anomaly",type:"Soil and stream geochemistry",detail:"Composite anomaly index: 76 · demonstration value",coordinates:"10.10° N, 9.38° W",source:"Regional Stream-Sediment Geochemistry",updated:"2020",validation:"Validated"})} onMouseLeave={clearReadout}/><button className="geochem-v2-spot geochem-c" aria-label="Nickel cobalt geochemical anomaly" onMouseEnter={() => showReadout({name:"Forest Belt Ni–Co anomaly",type:"Stream-sediment geochemistry",detail:"Ni–Co anomaly index: 64 · demonstration value",coordinates:"7.79° N, 8.86° W",source:"Regional Stream-Sediment Geochemistry",updated:"2019",validation:"Moderate confidence"})} onMouseLeave={clearReadout}/></div>}
+          {geophysicsActive && <div className="exploration-geophysics-overlays" style={{ opacity }}><i className="geophysics-v2-band geophysics-a"/><i className="geophysics-v2-band geophysics-b"/></div>}
+          {accessActive && <div className="exploration-access-overlays" style={{ opacity }}><i className="access-v2-line road-v2"/><i className="access-v2-line rail-v2"/><i className="protected-v2-area"/><span className="exploration-port-v2">◉ Conakry Port</span></div>}
+
+          <span className="exploration-region-v2 region-v2-boke">BOKÉ</span><span className="exploration-region-v2 region-v2-labe">LABÉ</span><span className="exploration-region-v2 region-v2-kindia">KINDIA</span><span className="exploration-region-v2 region-v2-kankan">KANKAN</span><span className="exploration-region-v2 region-v2-nzerekore">NZÉRÉKORÉ</span>
+
+          {activeLayers.has("occurrences") && explorationTargets.map((target, index) => <button key={`occ-${target.id}`} className={`exploration-occurrence-v2 occurrence-${index % 3}`} style={{ left: `${target.x - 3}%`, top: `${target.y + 4}%` }} aria-label={`Known occurrence near ${target.name}`} onMouseEnter={() => showReadout({name:`Historic occurrence near ${target.name}`,type:"Known mineral occurrence",detail:`Recorded commodity: ${target.commodities.join(" · ")}`,coordinates:target.coordinates,source:"National Geological Survey",updated:String(target.dataYear),validation:target.validation})} onMouseLeave={clearReadout}><i/></button>)}
+
+          {drillActive && explorationTargets.filter(target => target.evidenceLevel >= 3).map((target, index) => <button key={`drill-${target.id}`} className="exploration-drill-v2" style={{ left: `${target.x + 3 + index}%`, top: `${target.y + 3}%` }} aria-label={`Drill evidence near ${target.name}`} onMouseEnter={() => showReadout({name:`Drill evidence — ${target.name}`,type:"Subsurface evidence",detail:target.drillEvidence,coordinates:target.coordinates,source:"Historical Drill-Hole and Assay Archive",updated:target.lastUpdate,validation:target.validation})} onMouseLeave={clearReadout}><i/></button>)}
+
+          {activeLayers.has("exploration_targets") && targets.map(target => <button key={target.id} className={`exploration-target-v2 level-${target.evidenceLevel} ${selectedTargetId === target.id ? "selected" : ""}`} style={{ left: `${target.x}%`, top: `${target.y}%` }} onClick={() => onSelectTarget(target.id)} onMouseEnter={() => showReadout({name:target.name,type:`Level ${target.evidenceLevel} · ${target.evidenceLabel}`,detail:`${target.commodities.join(" · ")} · ${target.confidence} confidence`,coordinates:target.coordinates,source:explorationSources.find(source => source.id === target.sourceIds[0])?.agency || "National Geological Survey",updated:target.lastUpdate,validation:target.validation})} onMouseLeave={clearReadout} onFocus={() => showReadout({name:target.name,type:`Level ${target.evidenceLevel} · ${target.evidenceLabel}`,detail:`${target.commodities.join(" · ")} · ${target.confidence} confidence`,coordinates:target.coordinates,source:explorationSources.find(source => source.id === target.sourceIds[0])?.agency || "National Geological Survey",updated:target.lastUpdate,validation:target.validation})} aria-pressed={selectedTargetId === target.id} aria-label={`Select exploration target ${target.name}`}><i/><span><b>{target.name}</b><small>{target.commodities.join(" · ")}</small></span></button>)}
+
+          {activeLayers.has("exploration_targets") && targets.length === 0 && <div className="exploration-map-empty"><b>No targets match these filters</b><span>Adjust commodity, evidence level, data age, or region.</span></div>}
+        </div>
+
+        <div className="exploration-map-legend-v2"><span><i className="legend-v2-geology"/> Geology</span><span><i className="legend-v2-geochem"/> Geochemistry</span><span><i className="legend-v2-occurrence"/> Occurrence</span><span><i className="legend-v2-drill"/> Drill evidence</span><span><i className="legend-v2-target"/> Target area</span></div>
+        <div className="exploration-scale-v2">0&nbsp;&nbsp;&nbsp;50&nbsp;&nbsp;&nbsp;100 km</div>
+      </div>
+
+      <div className="exploration-map-readout-v2" aria-live="polite">
+        <span className={`readout-v2-icon ${hovered ? "active" : ""}`}>⌖</span>
+        {hovered ? <><div><b>{hovered.name}</b><small>{hovered.type} · {hovered.detail}</small></div><span><small>Source</small><b>{hovered.source}</b></span><span><small>Updated</small><b>{hovered.updated}</b></span><span><small>Validation</small><b>{hovered.validation}</b></span><strong>{hovered.coordinates}</strong></> : <><div><b>{selectedTarget.name}</b><small>Hover over evidence or select a target to inspect it.</small></div><span><small>Visible layers</small><b>{activeCount}</b></span><span><small>Map zoom</small><b>{Math.round(zoom * 100)}%</b></span><strong>{selectedTarget.coordinates}</strong></>}
+      </div>
+    </div>
+  );
+}
+
+function ExplorationV2() {
+  const [activeTab, setActiveTab] = useState<"ranking"|"matrix"|"metadata">("ranking");
+  const [selectedTargetId, setSelectedTargetId] = useState("CM-07");
+  const [selectedCommodities, setSelectedCommodities] = useState<string[]>(["Lithium","Nickel","Cobalt"]);
+  const [selectedLevels, setSelectedLevels] = useState<Set<number>>(new Set([2,3,4]));
+  const [filters, setFilters] = useState({ region: "All regions", evidenceType: "All evidence types", source: "All source agencies", confidence: "Moderate or higher", age: "Any age", access: "Any access" });
+  const [activeLayers, setActiveLayers] = useState<Set<string>>(new Set(defaultExplorationLayers));
+  const [layerOpacity, setLayerOpacity] = useState(.72);
+  const [selectedSourceId, setSelectedSourceId] = useState("geo-stream");
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [notice, setNotice] = useState("");
   const commodities = ["Bauxite","Iron ore","Gold","Lithium","Nickel","Cobalt","Copper","Graphite","Rare earth elements","Vanadium","Tungsten","Manganese","Other critical minerals"];
-  const layerGroups: Array<[string, string[]]> = [
-    ["Geological Context",["Bedrock geology","Surficial geology","Lithological units","Faults","Folds","Shear zones","Intrusions","Volcanic belts","Sedimentary basins","Metamorphic belts","Alteration zones","Tectonic structures"]],
-    ["Mineral & Element Evidence",["Known mineral occurrences","Historic mines","Historic prospects","Outcrop samples","Rock geochemistry","Soil geochemistry","Stream-sediment geochemistry","Water chemistry","Mineralogical observations","Commodity concentrations"]],
-    ["Geophysics & Remote Sensing",["Magnetic anomalies","Gravity anomalies","Radiometric surveys","Electromagnetic surveys","Remote-sensing anomalies","Satellite alteration indicators"]],
-    ["Subsurface Evidence",["Drill-hole locations","Core-log availability","Assay intervals","Drill intercepts","Estimated grade","Mineralized thickness","Resource-stage projects"]],
-    ["Constraints & Access",["Roads","Rail","Ports","Energy infrastructure","License areas","Land status","Protected areas","Communities","Water access","Environmental sensitivity"]],
-  ];
-  const matrix = [
-    ["Fouta Central","Strong","Moderate","Strong","Moderate","Weak","Strong","Missing","82%","2025","Strong"],
-    ["Kankan East","Strong","Strong","Strong","Moderate","Moderate","Moderate","Missing","76%","2024","Strong"],
-    ["Forest Belt CM-07","Strong","Moderate","Moderate","Strong","Moderate","Missing","Missing","58%","2019","Moderate"],
-    ["Beyla Ridge","Moderate","Weak","Moderate","Weak","Strong","Missing","Missing","63%","2021","Moderate"],
-  ];
+  const confidenceRank = { Low: 1, Moderate: 2, High: 3 };
+
+  const filteredTargets = explorationTargets.filter(target => {
+    const commodityMatch = selectedCommodities.length === 0 || target.commodities.some(commodity => selectedCommodities.includes(commodity));
+    const regionMatch = filters.region === "All regions" || target.region === filters.region;
+    const typeMatch = filters.evidenceType === "All evidence types" || target.evidenceTypes.includes(filters.evidenceType);
+    const sourceRecord = explorationSources.find(source => source.id === filters.source);
+    const sourceMatch = filters.source === "All source agencies" || (sourceRecord ? target.sourceIds.includes(sourceRecord.id) : true);
+    const confidenceMatch = filters.confidence === "Any confidence" || (filters.confidence === "High only" ? target.confidence === "High" : confidenceRank[target.confidence] >= 2);
+    const ageMatch = filters.age === "Any age" || (filters.age === "Current — 3 years" ? target.dataYear >= 2023 : target.dataYear <= 2021);
+    const accessMatch = filters.access === "Any access" || target.access === filters.access;
+    return commodityMatch && regionMatch && typeMatch && sourceMatch && confidenceMatch && ageMatch && accessMatch && selectedLevels.has(target.evidenceLevel);
+  });
+  const selectedTarget = explorationTargets.find(target => target.id === selectedTargetId) || explorationTargets[0];
+  const selectedSource = explorationSources.find(source => source.id === selectedSourceId) || explorationSources[0];
+  const comparedTargets = compareIds.map(id => explorationTargets.find(target => target.id === id)).filter(Boolean) as ExplorationTargetRecord[];
+
+  const toggleCommodity = (commodity: string) => setSelectedCommodities(current => current.includes(commodity) ? current.filter(item => item !== commodity) : [...current, commodity]);
+  const toggleLevel = (level: number) => setSelectedLevels(current => { const next = new Set(current); if (next.has(level)) next.delete(level); else next.add(level); return next; });
+  const updateFilter = (key: keyof typeof filters, value: string) => setFilters(current => ({ ...current, [key]: value }));
+  const toggleLayer = (key: string, sourceId: string) => { setActiveLayers(current => { const next = new Set(current); if (next.has(key)) next.delete(key); else next.add(key); return next; }); setSelectedSourceId(sourceId); };
+  const resetFilters = () => { setSelectedCommodities([]); setSelectedLevels(new Set([1,2,3,4])); setFilters({ region: "All regions", evidenceType: "All evidence types", source: "All source agencies", confidence: "Any confidence", age: "Any age", access: "Any access" }); };
+  const selectTarget = (id: string) => { setSelectedTargetId(id); const target = explorationTargets.find(item => item.id === id); if (target?.sourceIds[0]) setSelectedSourceId(target.sourceIds[0]); };
+  const toggleCompare = (id: string) => setCompareIds(current => current.includes(id) ? current.filter(item => item !== id) : current.length < 2 ? [...current, id] : [current[1], id]);
+  const flashNotice = (message: string) => { setNotice(message); window.setTimeout(() => setNotice(""), 2200); };
+
+  const saveView = () => {
+    window.localStorage.setItem("peblink-exploration-view", JSON.stringify({ selectedCommodities, selectedLevels:[...selectedLevels], filters, activeLayers:[...activeLayers], layerOpacity, selectedTargetId }));
+    flashNotice("Exploration view saved on this device");
+  };
+
+  const downloadText = (filename: string, content: string, mime: string) => {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([content], { type: mime }));
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  const exportEvidence = (format: "PDF"|"CSV"|"Image"|"Memo") => {
+    const safeName = selectedTarget.name.toLowerCase().replace(/[^a-z0-9]+/g,"-");
+    const lines = ["Exploration Evidence Summary", selectedTarget.name, `Target ID: ${selectedTarget.id}`, `Commodity: ${selectedTarget.commodities.join(" · ")}`, `Evidence level: Level ${selectedTarget.evidenceLevel} — ${selectedTarget.evidenceLabel}`, `Confidence: ${selectedTarget.confidence}`, `Interpretation: This area contains geological indicators that may justify additional exploration.`, `Geological favorability: ${selectedTarget.geologicalSetting}`, `Mineral evidence: ${selectedTarget.surfaceEvidence}`, `Subsurface evidence: ${selectedTarget.drillEvidence}`, `Infrastructure and access: ${selectedTarget.infrastructure}`, `Uncertainty and data gaps: ${selectedTarget.missingEvidence}`, `Recommended next action: ${selectedTarget.recommendation}`, "Disclaimer: This evidence does not confirm an economically viable mineral deposit."];
+    if (format === "PDF") { window.print(); flashNotice("Print view opened — choose Save as PDF"); return; }
+    if (format === "CSV") { downloadText(`${safeName}-evidence.csv`, `Section,Value\n${lines.slice(2).map(line => { const [label,...value] = line.split(": "); return `"${label}","${value.join(": ").replaceAll('"','""')}"`; }).join("\n")}`, "text/csv"); return; }
+    if (format === "Memo") { downloadText(`${safeName}-technical-memo.txt`, lines.join("\n\n"), "text/plain"); return; }
+    const canvas = document.createElement("canvas"); canvas.width = 1200; canvas.height = 630; const context = canvas.getContext("2d");
+    if (context) { context.fillStyle="#102a43"; context.fillRect(0,0,1200,630); context.fillStyle="#d2ad53"; context.fillRect(0,0,1200,8); context.fillStyle="#ffffff"; context.font="bold 34px Georgia"; context.fillText("Exploration Evidence Summary",70,88); context.font="bold 46px Georgia"; context.fillText(selectedTarget.name,70,160); context.fillStyle="#cbb8e5"; context.font="22px Arial"; context.fillText(`${selectedTarget.commodities.join(" · ")}  |  Level ${selectedTarget.evidenceLevel} — ${selectedTarget.evidenceLabel}`,70,205); context.fillStyle="#ffffff"; context.font="20px Arial"; [selectedTarget.geologicalSetting,selectedTarget.surfaceEvidence,selectedTarget.drillEvidence,`Next: ${selectedTarget.recommendation}`].forEach((line,index) => { const clipped = line.length > 86 ? `${line.slice(0,83)}…` : line; context.fillText(clipped,90,290 + index * 62); }); context.fillStyle="#b8c8d5"; context.font="17px Arial"; context.fillText("Demonstration data · Evidence for further investigation only",70,585); canvas.toBlob(blob => { if (blob) { const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download=`${safeName}-evidence.png`; link.click(); URL.revokeObjectURL(link.href); } },"image/png"); }
+  };
+
   return (
     <>
-      <header className="page-heading exploration-heading"><div><div className="breadcrumb purple-text">EXPLORATION INTELLIGENCE <span>/</span> NATIONAL VIEW</div><h1>Critical Minerals Exploration Intelligence</h1><p>Geological context, mineral evidence, exploration maturity, data confidence, and source transparency.</p></div><div className="heading-actions"><button className="select-btn">Save view</button><button className="primary purple-bg">⇩ Export Evidence Summary</button></div></header>
-      <div className="disclaimer"><b>i</b><span><strong>Exploration interpretation notice</strong> Exploration indicators represent evidence for further investigation and do not confirm the existence of an economically viable mineral deposit.</span><button>View methodology</button></div>
-      <div className="commodity-strip"><b>Commodity focus</b><div>{commodities.map((x,i)=><button className={i===3||i===4||i===5?"selected":""} key={x}>{x}{i===3||i===4||i===5?" ✓":""}</button>)}</div></div>
-      <section className="exploration-grid expanded">
-        <aside className="panel filter-panel">
-          <div className="panel-head"><div><span className="section-kicker purple-text">ANALYSIS CONTROLS</span><h3>Evidence filters</h3></div><button>Reset</button></div>
-          {[["Region","All regions"],["Evidence type","All evidence types"],["Data source","All source agencies"],["Confidence","Moderate or higher"],["Data age","Any age"],["Infrastructure access","Within 100 km"]].map(x=><label className="compact-field" key={x[0]}>{x[0]}<button className="field">{x[1]} <span>⌄</span></button></label>)}
-          <label>Evidence level</label>{["Level 4 — Appraised or resource stage","Level 3 — Drill supported","Level 2 — Surface supported","Level 1 — Speculative"].map((x,i)=><label className="check" key={x}><input type="checkbox" defaultChecked={i<3}/><i className={`ev e${4-i}`}/>{x}</label>)}
-          <button className="primary full purple-bg">Apply filters</button>
+      {notice && <div className="exploration-toast" role="status">✓ {notice}</div>}
+      <header className="page-heading exploration-heading"><div><div className="breadcrumb purple-text">EXPLORATION INTELLIGENCE <span>/</span> NATIONAL VIEW</div><h1>Critical Minerals Exploration Intelligence</h1><p>Evidence-based evaluation of geological opportunity, data confidence, and exploration maturity.</p></div><div className="heading-actions"><button className="select-btn" onClick={saveView}>Save view</button><button className="select-btn" onClick={() => comparedTargets.length === 2 ? flashNotice("Comparison is shown below the map") : flashNotice("Add two targets to comparison")}>Compare {compareIds.length}/2</button><details className="exploration-export-menu"><summary>⇩ Export evidence summary</summary><div>{(["PDF","CSV","Image","Memo"] as const).map(format => <button key={format} onClick={() => exportEvidence(format)}>{format === "Memo" ? "Technical memo" : format}</button>)}</div></details></div></header>
+      <div className="disclaimer exploration-disclaimer-v2"><b>i</b><span><strong>Exploration interpretation notice</strong> Exploration indicators represent evidence for further investigation and do not confirm the existence of an economically viable mineral deposit.</span><button onClick={() => flashNotice("Methodology: evidence strength, confidence, recency, access and visible constraints")}>View methodology</button></div>
+
+      <div className="commodity-strip exploration-commodity-v2"><b>Commodity focus</b><div><button className={selectedCommodities.length === 0 ? "selected" : ""} onClick={() => setSelectedCommodities([])}>All commodities{selectedCommodities.length === 0 ? " ✓" : ""}</button>{commodities.map(commodity => <button className={selectedCommodities.includes(commodity) ? "selected" : ""} aria-pressed={selectedCommodities.includes(commodity)} onClick={() => toggleCommodity(commodity)} key={commodity}>{commodity}{selectedCommodities.includes(commodity) ? " ✓" : ""}</button>)}</div><span>{filteredTargets.length} target areas</span></div>
+
+      <section className="exploration-workspace-v2">
+        <aside className="panel exploration-filter-v2">
+          <div className="panel-head"><div><span className="section-kicker purple-text">ANALYSIS CONTROLS</span><h3>Evidence filters</h3></div><button onClick={resetFilters}>Reset all</button></div>
+          <div className="exploration-filter-scroll">
+            <label>Region<select value={filters.region} onChange={event => updateFilter("region",event.target.value)}>{["All regions","Boké","Labé","Kindia","Kankan","Nzérékoré"].map(value => <option key={value}>{value}</option>)}</select></label>
+            <label>Evidence type<select value={filters.evidenceType} onChange={event => updateFilter("evidenceType",event.target.value)}>{["All evidence types","Geology","Geochemistry","Geophysics","Remote sensing","Drilling","Resource appraisal"].map(value => <option key={value}>{value}</option>)}</select></label>
+            <label>Data source<select value={filters.source} onChange={event => updateFilter("source",event.target.value)}><option>All source agencies</option>{explorationSources.map(source => <option value={source.id} key={source.id}>{source.agency} — {source.name}</option>)}</select></label>
+            <label>Confidence<select value={filters.confidence} onChange={event => updateFilter("confidence",event.target.value)}>{["Any confidence","Moderate or higher","High only"].map(value => <option key={value}>{value}</option>)}</select></label>
+            <label>Data age<select value={filters.age} onChange={event => updateFilter("age",event.target.value)}>{["Any age","Current — 3 years","Legacy — over 5 years"].map(value => <option key={value}>{value}</option>)}</select></label>
+            <label>Infrastructure access<select value={filters.access} onChange={event => updateFilter("access",event.target.value)}>{["Any access","Good","Moderate","Limited"].map(value => <option key={value}>{value}</option>)}</select></label>
+            <fieldset><legend>Evidence level</legend>{([4,3,2,1] as const).map(level => { const labels = {4:"Appraised or resource stage",3:"Drill supported",2:"Surface supported",1:"Speculative"}; return <label className="exploration-level-check" key={level}><input type="checkbox" checked={selectedLevels.has(level)} onChange={() => toggleLevel(level)} /><i className={`evidence-dot-v2 level-${level}`}/><span><b>Level {level}</b>{labels[level]}</span></label>; })}</fieldset>
+          </div>
+          <div className="exploration-filter-result"><span>Matching targets</span><b>{filteredTargets.length}</b><small>Filters update the map, summaries and tables immediately.</small></div>
         </aside>
-        <article className="panel exploration-map-panel">
-          <div className="panel-head"><div><span className="section-kicker purple-text">65–75% MAP WORKSPACE</span><h3>National multi-layer evidence map</h3></div><div className="panel-actions"><button>Basemap⌄</button><button>Opacity 72%</button></div></div>
-          <MapVisual exploration onSelect={onOpen}/>
-          <div className="map-footer"><span>Visible: Bedrock geology · Known occurrences · Geochemistry · Drill holes · Exploration targets</span><button>□ Full screen</button><button>↗ Export map</button></div>
+
+        <article className="panel exploration-map-panel-v2">
+          <div className="panel-head"><div><span className="section-kicker purple-text">DOMINANT MAP WORKSPACE</span><h3>National multi-layer exploration evidence map</h3></div><span className="exploration-map-status"><i/> {activeLayers.size} layers visible</span></div>
+          <InteractiveExplorationMap targets={filteredTargets} selectedTargetId={selectedTargetId} onSelectTarget={selectTarget} activeLayers={activeLayers} onToggleLayer={toggleLayer} onSelectSource={sourceId => { setSelectedSourceId(sourceId); setActiveTab("metadata"); }} opacity={layerOpacity} onOpacityChange={setLayerOpacity}/>
         </article>
-        <aside className="panel layer-panel">
-          <div className="panel-head"><div><span className="section-kicker purple-text">MAP CONTROL</span><h3>Evidence layers</h3></div><b>18 on</b></div>
-          <div className="layer-scroll">{layerGroups.map((g,gi)=><details key={g[0]} open={gi<2}><summary><span>{g[0]}</span><b>{gi===0?"6":gi===1?"5":"0"} on</b></summary><div>{g[1].map((x,i)=><label key={x}><input type="checkbox" defaultChecked={gi<2&&i<6}/><span>{x}</span>{(i===0||i===2)&&<small>ⓘ</small>}</label>)}</div></details>)}</div>
+
+        <aside className="panel exploration-target-panel-v2">
+          <div className="panel-head"><div><span className="section-kicker purple-text">SELECTED TARGET</span><h3>{selectedTarget.name}</h3></div><button onClick={() => toggleCompare(selectedTarget.id)}>{compareIds.includes(selectedTarget.id) ? "Remove" : "+ Compare"}</button></div>
+          <div className="exploration-target-scroll-v2">
+            <div className="exploration-target-identity"><span className={`evidence-level-v2 level-${selectedTarget.evidenceLevel}`}>LEVEL {selectedTarget.evidenceLevel}</span><b>{selectedTarget.evidenceLabel}</b><small>{selectedTarget.id} · {selectedTarget.region} · {selectedTarget.coordinates}</small><div>{selectedTarget.commodities.map(commodity => <i key={commodity}>{commodity}</i>)}</div></div>
+            <div className="exploration-target-metrics-v2"><span>Stage<b>{selectedTarget.stage}</b></span><span>Confidence<b>{selectedTarget.confidence}</b></span><span>Coverage<b>{selectedTarget.coverage}</b></span><span>Last update<b>{selectedTarget.lastUpdate}</b></span></div>
+            {[['Geological setting',selectedTarget.geologicalSetting],['Known occurrences',selectedTarget.knownOccurrences],['Surface evidence',selectedTarget.surfaceEvidence],['Geophysical evidence',selectedTarget.geophysicalEvidence],['Drill evidence',selectedTarget.drillEvidence]].map(([label,value]) => <section key={label}><b>{label}</b><p>{value}</p></section>)}
+            <section className="target-gap-v2"><b>Missing evidence & limitations</b><p>{selectedTarget.missingEvidence} {selectedTarget.limitations}</p></section>
+            <section><b>Related licenses</b><p>{selectedTarget.relatedLicenses}</p></section><section><b>Nearby infrastructure</b><p>{selectedTarget.infrastructure}</p></section><section><b>Environmental or land constraints</b><p>{selectedTarget.environmentalConstraint}</p></section>
+            <div className="next-action-v2"><span>RECOMMENDED NEXT INVESTIGATION</span><b>{selectedTarget.recommendation}</b><small>Requires human geological review before action.</small></div>
+          </div>
+          <div className="exploration-target-actions-v2"><button onClick={() => { setSelectedSourceId(selectedTarget.sourceIds[0]); setActiveTab("metadata"); }}>View sources</button><button className="purple-bg" onClick={() => exportEvidence("Memo")}>Export summary</button></div>
         </aside>
       </section>
-      <section className="exploration-summary-grid">
-        <article className="panel target-summary"><div className="panel-head"><div><span className="section-kicker purple-text">SELECTED TARGET</span><h3>Forest Belt CM-07</h3></div><button onClick={()=>onOpen("Forest Belt CM-07")}>Full details →</button></div><div className="target-facts"><span>Target ID<b>CM-07</b></span><span>Region<b>Nzérékoré</b></span><span>Commodities<b>Nickel · Cobalt</b></span><span>Stage<b>Early exploration</b></span><span>Evidence level<b>Level 2 — Surface supported</b></span><span>Overall confidence<b>Moderate</b></span></div><div className="responsible-copy"><b>Interpretation</b><p>This area contains geological indicators that may justify additional exploration.</p><b>Supporting evidence</b><p>Mapped ultramafic lithology, stream-sediment anomalies, a historic occurrence, and a regional magnetic anomaly.</p><b>Limitations</b><p>No modern drill records; geochemical coverage is incomplete and last updated in 2019.</p></div></article>
-        <article className="panel structured-summary"><div className="panel-head"><div><span className="section-kicker purple-text">AUTOMATED STRUCTURED SUMMARY</span><h3>Five-part evidence summary</h3></div><button>PDF⌄</button></div>{[["1","Geological favorability","Ultramafic units and regional structures are mapped within the target."],["2","Mineral or elemental evidence","Moderate Ni–Co surface anomaly and one historic occurrence."],["3","Subsurface evidence","No validated drill or assay interval records available."],["4","Infrastructure and access","Road access within 24 km; grid connection within 73 km."],["5","Uncertainty and data gaps","Modern drilling, analytical metadata, and field verification are missing."]].map(x=><div key={x[0]}><i>{x[0]}</i><span><b>{x[1]}</b><p>{x[2]}</p></span></div>)}</article>
-        <article className="panel evidence-panel"><div className="panel-head"><div><span className="section-kicker purple-text">EVIDENCE SCORES</span><h3>Transparent components</h3></div></div><div className="evidence-level"><span>LEVEL 2</span><b>Surface supported</b><small>Not a discovery probability</small></div>{[["Geological favorability",78],["Mineral evidence",64],["Subsurface evidence",18],["Infrastructure access",71],["Metadata completeness",58]].map(([n,v])=><div className="evidence-score" key={n}><span>{n}<b>{v}%</b></span><i><em style={{width:`${v}%`}}/></i></div>)}</article>
+
+      {comparedTargets.length > 0 && <section className="exploration-compare-v2"><div><span className="section-kicker purple-text">COMPARE MODE</span><h3>{comparedTargets.length === 2 ? "Two-target evidence comparison" : "Select one more target"}</h3></div>{comparedTargets.map(target => <article key={target.id}><button onClick={() => toggleCompare(target.id)}>×</button><b>{target.name}</b><span>{target.commodities.join(" · ")}</span><small>Level {target.evidenceLevel} · {target.confidence} confidence</small><p><strong>Drilling:</strong> {target.drillEvidence}</p><p><strong>Data gap:</strong> {target.missingEvidence}</p><em>Next: {target.recommendation}</em></article>)}</section>}
+
+      <section className="exploration-summary-grid-v2">
+        <article className="panel exploration-interpretation-v2"><div className="panel-head"><div><span className="section-kicker purple-text">RESPONSIBLE INTERPRETATION</span><h3>{selectedTarget.name}</h3></div><span className={`evidence-level-v2 level-${selectedTarget.evidenceLevel}`}>LEVEL {selectedTarget.evidenceLevel}</span></div><div><b>Interpretation</b><p>This area contains geological indicators that may justify additional exploration.</p><b>Supporting evidence</b><p>{selectedTarget.geologicalSetting} {selectedTarget.surfaceEvidence}</p><b>Limitations</b><p>{selectedTarget.limitations}</p></div></article>
+        <article className="panel structured-summary structured-summary-v2"><div className="panel-head"><div><span className="section-kicker purple-text">STRUCTURED EVIDENCE SUMMARY</span><h3>Five-part evidence summary</h3></div><button onClick={() => exportEvidence("CSV")}>CSV ↗</button></div>{[["1","Geological favorability",selectedTarget.geologicalSetting],["2","Mineral or elemental evidence",selectedTarget.surfaceEvidence],["3","Subsurface evidence",selectedTarget.drillEvidence],["4","Infrastructure and access",selectedTarget.infrastructure],["5","Uncertainty and data gaps",selectedTarget.missingEvidence]].map(item => <div key={item[0]}><i>{item[0]}</i><span><b>{item[1]}</b><p>{item[2]}</p></span></div>)}</article>
+        <article className="panel evidence-panel evidence-panel-v2"><div className="panel-head"><div><span className="section-kicker purple-text">TRANSPARENT COMPONENTS</span><h3>Evidence components</h3></div></div><div className="evidence-level"><span>LEVEL {selectedTarget.evidenceLevel}</span><b>{selectedTarget.evidenceLabel}</b><small>Not a discovery probability</small></div>{selectedTarget.scores.map(([name,value]) => <div className="evidence-score" key={name}><span>{name}<b>{value}%</b></span><i><em style={{width:`${value}%`}}/></i></div>)}</article>
       </section>
-      <div className="exploration-tabs"><button className={activeTab==="ranking"?"active":""} onClick={()=>setActiveTab("ranking")}>Areas Requiring Further Evaluation</button><button className={activeTab==="matrix"?"active":""} onClick={()=>setActiveTab("matrix")}>Evidence Matrix</button><button className={activeTab==="metadata"?"active":""} onClick={()=>setActiveTab("metadata")}>Data Sources & Metadata</button></div>
-      {activeTab==="ranking"&&<article className="panel table-panel exploration-table"><div className="panel-head"><div><span className="section-kicker purple-text">RANKED REVIEW QUEUE</span><h3>Areas Requiring Further Evaluation</h3></div><button className="text-btn">Scoring method: evidence 45% · confidence 25% · access 15% · constraints 15% ⓘ</button></div><div className="table-scroll"><table><thead><tr><th>Rank</th><th>Area</th><th>Commodity</th><th>Evidence level</th><th>Geological favorability</th><th>Surface evidence</th><th>Drill evidence</th><th>Data confidence</th><th>Infrastructure access</th><th>Environmental constraint</th><th>Recommended action</th></tr></thead><tbody>{targets.map((t,i)=><tr key={t[0]} onClick={()=>onOpen(t[1])}><td><b className="rank">{t[0]}</b></td><td><b>{t[1]}</b></td><td>{t[2]}</td><td><span className="purple-chip">{t[3]}</span></td><td>{["Strong","Strong","Strong","Moderate"][i]}</td><td>{["Moderate","Strong","Moderate","Weak"][i]}</td><td>{["Strong","Moderate","Missing","Missing"][i]}</td><td>{t[4]}</td><td>{["Good","Good","Moderate","Limited"][i]}</td><td>{["Low","Medium","High","Medium"][i]}</td><td><b>{t[5]}</b></td></tr>)}</tbody></table></div><p className="table-note">Ranking supports review prioritization and is not an objective probability of discovery.</p></article>}
-      {activeTab==="matrix"&&<article className="panel table-panel exploration-table"><div className="panel-head"><div><span className="section-kicker purple-text">COMPARATIVE EVIDENCE</span><h3>Exploration target evidence matrix</h3></div><div className="matrix-legend"><span>● Strong</span><span>● Moderate</span><span>● Weak</span><span>○ Missing</span><span>⊘ Restricted</span></div></div><div className="table-scroll"><table><thead><tr>{["Target","Geological context","Known occurrence","Surface geochemistry","Geophysics","Remote sensing","Drilling","Resource appraisal","Metadata completeness","Data recency","Overall confidence"].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>{matrix.map(r=><tr key={r[0]}>{r.map((x,i)=><td key={i} className={["Strong","Moderate","Weak","Missing","Restricted"].includes(x)?`matrix-${x.toLowerCase()}`:""}>{i===0?<b>{x}</b>:x}</td>)}</tr>)}</tbody></table></div></article>}
-      {activeTab==="metadata"&&<article className="panel metadata-panel"><div className="panel-head"><div><span className="section-kicker purple-text">SOURCE TRANSPARENCY</span><h3>Selected layer metadata — Stream-sediment geochemistry</h3></div><span className="status active">Validated</span></div><div className="metadata-grid">{[["Source agency","National Geological Survey"],["Dataset name","Guinea Regional Stream Sediment Survey"],["Publication date","14 June 2020"],["Collection date","2017–2019"],["Analytical method","ICP-MS multi-element assay"],["Coordinate system","WGS 84 / UTM Zone 28N"],["Spatial precision","±25 metres"],["Detection limit","Ni 0.2 ppm · Co 0.1 ppm"],["Data license","Government analytical use"],["Access status","Restricted — aggregated display"],["Validation status","Validated with 3 exceptions"],["Confidence level","Moderate"],["Source reference","NGS-GEO-2020-SS-14"],["Known limitations","Incomplete eastern coverage; inconsistent legacy sample spacing"]].map(x=><span key={x[0]}><small>{x[0]}</small><b>{x[1]}</b></span>)}</div><div className="limitations"><b>Visible data gap</b><p>Coverage ends 18 km east of target CM-07. Conclusions for that area rely on regional interpolation and require field verification.</p></div></article>}
-      <section className="evidence-classes">{[["1","Speculative","Broad favorable setting; limited regional indicators; no confirmed surface or subsurface evidence."],["2","Surface Supported","Geochemical anomaly, mineralized outcrop, historic occurrence, or remote/geophysical indication."],["3","Drill Supported","Drill records, repeated mineralized intervals, core or assay evidence, and indication of continuity."],["4","Appraised or Resource Stage","Geological model, resource estimate, advanced assessment, and repeated project-level drilling."]].map(x=><article className={`level-card level-${x[0]}`} key={x[0]}><span>LEVEL {x[0]}</span><b>{x[1]}</b><p>{x[2]}</p></article>)}</section>
+
+      <div className="exploration-tabs exploration-tabs-v2"><button className={activeTab==="ranking"?"active":""} onClick={() => setActiveTab("ranking")}>Areas Requiring Further Evaluation <b>{filteredTargets.length}</b></button><button className={activeTab==="matrix"?"active":""} onClick={() => setActiveTab("matrix")}>Evidence Matrix</button><button className={activeTab==="metadata"?"active":""} onClick={() => setActiveTab("metadata")}>Data Sources & Metadata</button></div>
+      {activeTab === "ranking" && <article className="panel table-panel exploration-table exploration-table-v2"><div className="panel-head"><div><span className="section-kicker purple-text">RANKED REVIEW QUEUE</span><h3>Areas Requiring Further Evaluation</h3></div><button className="text-btn">Evidence 45% · confidence 25% · access 15% · constraints 15% ⓘ</button></div><div className="table-scroll"><table><thead><tr><th>Rank</th><th>Area</th><th>Commodity</th><th>Evidence level</th><th>Geological favorability</th><th>Surface evidence</th><th>Drill evidence</th><th>Data confidence</th><th>Infrastructure</th><th>Environmental constraint</th><th>Recommended action</th><th>Compare</th></tr></thead><tbody>{filteredTargets.map((target,index) => <tr key={target.id} className={selectedTargetId === target.id ? "selected-row" : ""} onClick={() => selectTarget(target.id)}><td><b className="rank">{String(index+1).padStart(2,"0")}</b></td><td><b>{target.name}</b><small>{target.id} · {target.region}</small></td><td>{target.commodities.join(" · ")}</td><td><span className={`evidence-table-level level-${target.evidenceLevel}`}>Level {target.evidenceLevel}</span></td><td>{target.favorability}</td><td>{target.matrix[2]}</td><td>{target.matrix[5]}</td><td>{target.confidence}</td><td>{target.access}</td><td>{target.environmentalConstraint.split(" — ")[0]}</td><td><b>{target.recommendation}</b></td><td><button className={compareIds.includes(target.id) ? "compare-added" : ""} onClick={event => { event.stopPropagation(); toggleCompare(target.id); }}>{compareIds.includes(target.id) ? "✓ Added" : "+ Add"}</button></td></tr>)}</tbody></table></div>{filteredTargets.length === 0 ? <div className="exploration-empty-table">No target areas match the current filters.</div> : <p className="table-note">Ranking supports review prioritization. It is explainable and is not an objective probability of discovery.</p>}</article>}
+      {activeTab === "matrix" && <article className="panel table-panel exploration-table exploration-table-v2"><div className="panel-head"><div><span className="section-kicker purple-text">COMPARATIVE EVIDENCE</span><h3>Exploration target evidence matrix</h3></div><div className="matrix-legend"><span>● Strong</span><span>● Moderate</span><span>● Weak</span><span>○ Missing</span><span>⊘ Restricted</span></div></div><div className="table-scroll"><table><thead><tr>{["Target","Geological context","Known occurrence","Surface geochemistry","Geophysics","Remote sensing","Drilling","Resource appraisal","Metadata completeness","Data recency","Overall confidence"].map(label => <th key={label}>{label}</th>)}</tr></thead><tbody>{filteredTargets.map(target => <tr key={target.id} onClick={() => selectTarget(target.id)}><td><b>{target.name}</b></td>{target.matrix.map((value,index) => <td key={index} className={`matrix-${value.toLowerCase()}`}>{value}</td>)}<td>{target.dataYear}</td><td>{target.confidence}</td></tr>)}</tbody></table></div></article>}
+      {activeTab === "metadata" && <article className="panel exploration-metadata-v2"><div className="panel-head"><div><span className="section-kicker purple-text">SOURCE TRANSPARENCY</span><h3>Data sources and selected-layer metadata</h3></div><span className="status active">{selectedSource.validation}</span></div><div className="exploration-source-layout-v2"><aside>{explorationSources.map(source => <button key={source.id} className={selectedSourceId === source.id ? "active" : ""} onClick={() => setSelectedSourceId(source.id)}><b>{source.name}</b><small>{source.agency}</small><span>{source.confidence} confidence</span></button>)}</aside><div><h4>{selectedSource.name}</h4><p>{selectedSource.agency} · {selectedSource.reference}</p><div className="metadata-grid metadata-grid-v2">{[["Source agency",selectedSource.agency],["Dataset name",selectedSource.name],["Publication date",selectedSource.publication],["Collection date",selectedSource.collection],["Analytical method",selectedSource.method],["Coordinate system",selectedSource.coordinateSystem],["Spatial precision",selectedSource.precision],["Detection limit",selectedSource.detectionLimit],["Data license",selectedSource.license],["Access status",selectedSource.access],["Validation status",selectedSource.validation],["Confidence level",selectedSource.confidence],["Source reference",selectedSource.reference]].map(([label,value]) => <span key={label}><small>{label}</small><b>{value}</b></span>)}</div><div className="limitations"><b>Known limitation — visible to users</b><p>{selectedSource.limitation}</p></div></div></div></article>}
+
+      <section className="evidence-classes evidence-classes-v2">{[["1","Speculative","Broad favorable setting; limited regional indicators; no confirmed surface or subsurface evidence."],["2","Surface Supported","Geochemical anomaly, mineralized outcrop, historic occurrence, or remote/geophysical indication."],["3","Drill Supported","Drill records, repeated mineralized intervals, core or assay evidence, and indication of continuity."],["4","Appraised or Resource Stage","Geological model, resource estimate, advanced assessment, and repeated project-level drilling."]].map(item => <article className={`level-card level-${item[0]}`} key={item[0]}><span>LEVEL {item[0]}</span><b>{item[1]}</b><p>{item[2]}</p></article>)}</section>
     </>
   );
 }
@@ -614,7 +914,7 @@ export default function Home() {
       <main className={`content ${collapsed ? "wide" : ""}`}>
         <div className="mobile-title">{pageTitle}</div>
         {page==="overview" && <Overview />}
-        {page==="exploration" && <Exploration onOpen={setSelected}/>}
+        {page==="exploration" && <ExplorationV2 />}
         {page==="licenses" && <Licenses onOpen={setSelected}/>}
         {!["overview","exploration","licenses"].includes(page) && <GenericModule page={page as Exclude<PageKey,"overview"|"exploration"|"licenses">} onOpen={setSelected}/>}
       </main>

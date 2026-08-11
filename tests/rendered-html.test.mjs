@@ -54,3 +54,30 @@ test("keeps the map interactions and responsive styles in the Overview module", 
   assert.match(css, /@keyframes pollution-pulse/);
   assert.match(css, /@media\(max-width:800px\).*\.overview-risk-map/s);
 });
+
+test("implements the expert-aligned interactive Exploration Intelligence workspace", async () => {
+  const [page, css] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /function InteractiveExplorationMap/);
+  assert.match(page, /function ExplorationV2/);
+  assert.match(page, /const explorationLayerGroups/);
+  assert.match(page, /selectedCommodities/);
+  assert.match(page, /aria-pressed=\{selectedTargetId === target\.id\}/);
+  assert.match(page, /Math\.min\(2, Math\.max\(0\.8/);
+  assert.match(page, /localStorage\.setItem\("peblink-exploration-view"/);
+  assert.match(page, /window\.print\(\)/);
+  assert.match(page, /canvas\.toBlob/);
+  assert.match(page, /Basemap: \{basemap\}/);
+  assert.match(page, /national-exploration-evidence-map\.png/);
+  assert.match(page, /Five-part evidence summary/);
+  assert.match(page, /Areas Requiring Further Evaluation/);
+  assert.match(page, /Data Sources & Metadata/);
+  assert.match(page, /do not confirm the existence of an economically viable mineral deposit/);
+  assert.match(css, /\.exploration-workspace-v2/);
+  assert.match(css, /\.exploration-layer-drawer/);
+  assert.match(css, /\.exploration-target-panel-v2/);
+  assert.match(css, /@media\(max-width:900px\).*\.exploration-workspace-v2/s);
+});
