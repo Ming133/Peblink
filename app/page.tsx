@@ -584,6 +584,78 @@ type ExplorationReadout = {
   validation: string;
 };
 
+type ExplorationLayerExample = ExplorationReadout & {
+  key: string;
+  label: string;
+  group: string;
+  kind: "analysis" | "geology" | "mineral" | "geophysics" | "subsurface" | "constraint";
+  x: number;
+  y: number;
+};
+
+const explorationLayerExampleSeeds: Array<[string,string,string,string]> = [
+  ["exploration_targets","Fouta Central target area","A combined geological, geochemical and drilling target used for further review.","11.30° N, 12.29° W"],
+  ["bedrock","Kankan Birimian bedrock unit","Mapped volcanic and sedimentary basement compiled from national geological sheets.","10.18° N, 9.42° W"],
+  ["surficial","Boké lateritic cover","Thick surface laterite interpreted from mapping and terrain data.","11.09° N, 14.02° W"],
+  ["lithology","Fouta granite–pegmatite unit","Granite and pegmatite lithologies mapped within the Fouta corridor.","11.24° N, 12.36° W"],
+  ["faults","Kankan East fault trace","Interpreted regional fault crossing the Kankan target corridor.","10.10° N, 9.38° W"],
+  ["folds","Labé regional fold axis","Mapped fold axis showing the direction of deformed rock units.","11.18° N, 12.54° W"],
+  ["shear","Nzérékoré shear corridor","Deformed rock corridor that may have controlled fluid movement.","7.83° N, 8.91° W"],
+  ["intrusions","Beyla alkaline intrusion","Interpreted intrusive body associated with a radiometric response.","8.68° N, 8.65° W"],
+  ["volcanic","Siguiri volcanic belt","Regional volcanic sequence mapped from geological compilation.","11.34° N, 9.19° W"],
+  ["basins","Coastal sedimentary basin","Sedimentary basin boundary shown for national geological context.","10.31° N, 13.48° W"],
+  ["metamorphic","Forest Belt metamorphic domain","Metamorphic rock domain interpreted from legacy mapping.","7.72° N, 8.77° W"],
+  ["alteration","Beyla alteration zone","Possible alteration pattern requiring field verification.","8.73° N, 8.71° W"],
+  ["tectonic","Guinea regional lineament","Large interpreted structural line crossing several geological units.","10.44° N, 10.73° W"],
+  ["occurrences","Forest Belt historic nickel occurrence","Historic record of nickel-bearing material near the CM-07 target.","7.79° N, 8.86° W"],
+  ["historic_mines","Siguiri historic gold working","Location of a recorded historic small-scale gold working.","11.43° N, 9.17° W"],
+  ["historic_prospects","Kankan copper prospect","Historic prospect record with copper-bearing float observations.","10.14° N, 9.31° W"],
+  ["outcrops","Fouta pegmatite outcrop sample","Rock-chip sample collected from a mapped pegmatite outcrop.","11.27° N, 12.32° W"],
+  ["rock_geochem","Kindia graphite rock sample","Rock sample with a graphite-bearing mineralogical observation.","10.01° N, 12.88° W"],
+  ["soil_geochem","Kankan gold-in-soil anomaly","Cluster of elevated gold and copper pathfinder values in soil.","10.08° N, 9.29° W"],
+  ["stream_geochem","Forest Belt Ni–Co stream anomaly","Moderate nickel and cobalt anomaly in stream sediment.","7.76° N, 8.82° W"],
+  ["water_chem","Boké drainage water sample","Water-chemistry sample used to screen downstream element levels.","10.84° N, 14.11° W"],
+  ["mineralogy","Fouta spodumene observation","Mineralogical observation requiring laboratory confirmation.","11.29° N, 12.27° W"],
+  ["concentrations","Boké aluminium concentration zone","Aggregated aluminium concentration values across a lateritic plateau.","11.16° N, 14.08° W"],
+  ["magnetic","Forest Belt magnetic high","Regional magnetic response following an interpreted ultramafic unit.","7.81° N, 8.84° W"],
+  ["gravity","Kankan gravity gradient","Gravity change interpreted near a major geological contact.","10.22° N, 9.47° W"],
+  ["radiometric","Beyla radiometric anomaly","Elevated radiometric response over an interpreted intrusive complex.","8.70° N, 8.67° W"],
+  ["electromagnetic","Kindia electromagnetic conductor","Regional conductor with more than one possible geological explanation.","10.04° N, 12.82° W"],
+  ["remote","Fouta remote-sensing lineament","Linear satellite feature aligned with mapped geological structure.","11.21° N, 12.41° W"],
+  ["satellite","Beyla satellite alteration indicator","Satellite-derived spectral response that may represent altered rock.","8.66° N, 8.62° W"],
+  ["drill_holes","Fouta drill hole FC-DDH-03","Validated collar location for a demonstration exploration drill hole.","11.31° N, 12.25° W"],
+  ["core_logs","Boké core log BK-14","Digitized geological log describing lithology down the drill core.","11.18° N, 14.04° W"],
+  ["assay_intervals","Fouta assay interval 82–96 m","Laboratory assay interval recorded between 82 and 96 metres depth.","11.32° N, 12.24° W"],
+  ["drill_intercepts","Kankan drill intercept KE-04","Historic mineralized interval supported by partial assay records.","10.12° N, 9.34° W"],
+  ["estimated_grade","Boké estimated-grade block","Generalized grade category from restricted project documentation.","11.15° N, 14.06° W"],
+  ["mineralized_thickness","Boké mineralized-thickness section","Demonstration section showing repeated mineralized thickness records.","11.14° N, 14.03° W"],
+  ["resource_projects","Boké appraised project area","Project with repeated drilling and resource-stage documentation under review.","11.16° N, 14.08° W"],
+  ["roads","Kankan target access road","Road segment used to estimate access to the Kankan target.","10.09° N, 9.44° W"],
+  ["rail","Boké mineral railway","Rail corridor connecting plateau operations toward the coast.","10.98° N, 13.91° W"],
+  ["ports","Kamsar export port","Coastal port used in infrastructure-distance analysis.","10.66° N, 14.61° W"],
+  ["energy","Kindia grid substation","Electricity substation used for preliminary access screening.","9.99° N, 12.91° W"],
+  ["licenses","GUI-EXP-071 license area","Active exploration license boundary from the mining cadastre.","8.01° N, 8.97° W"],
+  ["land","Nzérékoré community-use land","Generalized community-use area requiring local verification.","7.85° N, 8.79° W"],
+  ["protected","Forest watershed protection area","Protected watershed overlay used for early constraint screening.","7.69° N, 8.73° W"],
+  ["communities","Beyla community","Community location used for consultation and access planning.","8.69° N, 8.64° W"],
+  ["water","Milo River access point","Potential water-access point subject to environmental review.","10.17° N, 9.39° W"],
+  ["environmental","Forest Belt sensitivity zone","Combined watershed, forest and community sensitivity overlay.","7.74° N, 8.80° W"],
+];
+
+const explorationLayerExamples: ExplorationLayerExample[] = explorationLayerExampleSeeds.map(([key,name,detail,coordinates], index) => {
+  const group = explorationLayerGroups.find(layerGroup => layerGroup.items.some(item => item.key === key))!;
+  const layer = group.items.find(item => item.key === key)!;
+  const source = explorationSources.find(record => record.id === layer.sourceId) || explorationSources[0];
+  const kind: ExplorationLayerExample["kind"] = group.name === "Analysis Results" ? "analysis" : group.name === "Geological Context" ? "geology" : group.name === "Mineral & Element Evidence" ? "mineral" : group.name === "Geophysics & Remote Sensing" ? "geophysics" : group.name === "Subsurface Evidence" ? "subsurface" : "constraint";
+  return { key, label:layer.label, group:group.name, kind, name, type:layer.label, detail, coordinates, source:source.agency, updated:source.publication, validation:source.validation, x:14 + ((index * 19) % 73), y:13 + ((index * 23) % 72) };
+});
+
+const explorationLayerExampleByKey = new Map(explorationLayerExamples.map(example => [example.key, example]));
+
+function EvidenceHoverCard({ item }: { item: ExplorationReadout }) {
+  return <span className="exploration-floating-tooltip"><b>{item.name}</b><small>{item.type}</small><em>{item.detail}</em><strong>{item.coordinates}</strong></span>;
+}
+
 function InteractiveExplorationMap({
   targets,
   selectedTargetId,
@@ -606,6 +678,7 @@ function InteractiveExplorationMap({
   const [zoom, setZoom] = useState(1);
   const [showLayers, setShowLayers] = useState(false);
   const [hovered, setHovered] = useState<ExplorationReadout | null>(null);
+  const [selectedEvidence, setSelectedEvidence] = useState<ExplorationReadout | null>(null);
   const [basemapIndex, setBasemapIndex] = useState(0);
   const basemaps = ["Geology", "Terrain", "Muted"] as const;
   const basemap = basemaps[basemapIndex];
@@ -617,10 +690,24 @@ function InteractiveExplorationMap({
   const geophysicsActive = ["magnetic","gravity","radiometric","electromagnetic","remote","satellite"].some(key => activeLayers.has(key));
   const drillActive = ["drill_holes","core_logs","assay_intervals","drill_intercepts","estimated_grade","mineralized_thickness","resource_projects"].some(key => activeLayers.has(key));
   const accessActive = ["roads","rail","ports","energy","licenses","land","protected","communities","water","environmental"].some(key => activeLayers.has(key));
+  const customExampleKeys = new Set(["exploration_targets","occurrences","stream_geochem","drill_holes"]);
+  const visibleLayerExamples = explorationLayerExamples.filter(example => activeLayers.has(example.key) && !customExampleKeys.has(example.key));
+  const geochemicalMapExamples: Array<{ className:string; layerKey:string; readout:ExplorationReadout }> = [
+    { className:"geochem-a", layerKey:"stream_geochem", readout:{name:"Fouta lithium anomaly",type:"Stream-sediment geochemistry",detail:"Li pathfinder index: 82 · demonstration value",coordinates:"11.24° N, 12.36° W",source:"Regional Stream-Sediment Geochemistry",updated:"2020",validation:"Validated with exceptions"} },
+    { className:"geochem-b", layerKey:"soil_geochem", readout:{name:"Kankan Au–Cu anomaly",type:"Soil geochemistry",detail:"Composite anomaly index: 76 · demonstration value",coordinates:"10.10° N, 9.38° W",source:"Regional Stream-Sediment Geochemistry",updated:"2020",validation:"Validated"} },
+    { className:"geochem-c", layerKey:"stream_geochem", readout:{name:"Forest Belt Ni–Co anomaly",type:"Stream-sediment geochemistry",detail:"Ni–Co anomaly index: 64 · demonstration value",coordinates:"7.79° N, 8.86° W",source:"Regional Stream-Sediment Geochemistry",updated:"2019",validation:"Moderate confidence"} },
+  ];
+  const currentReadout = hovered || selectedEvidence;
 
   const changeZoom = (amount: number) => setZoom(current => Math.min(2, Math.max(0.8, Number((current + amount).toFixed(1)))));
   const showReadout = (item: ExplorationReadout) => setHovered(item);
   const clearReadout = () => setHovered(null);
+  const handleLayerToggle = (item: ExplorationLayerItem) => {
+    const becomingVisible = !activeLayers.has(item.key);
+    const example = explorationLayerExampleByKey.get(item.key);
+    onToggleLayer(item.key, item.sourceId);
+    if (example) setSelectedEvidence({ ...example, type:`${item.label} · layer ${becomingVisible ? "shown" : "hidden"}`, detail:becomingVisible ? `Example added to the map: ${example.detail}` : `Layer hidden. Example: ${example.detail}` });
+  };
   const exportMapImage = () => {
     const canvas = document.createElement("canvas");
     canvas.width = 1400;
@@ -680,7 +767,7 @@ function InteractiveExplorationMap({
           <div className="exploration-layer-drawer-scroll">
             {explorationLayerGroups.map((group, groupIndex) => {
               const groupCount = group.items.filter(item => activeLayers.has(item.key)).length;
-              return <details key={group.name} open={groupIndex < 3}><summary><span>{group.name}</span><b>{groupCount}/{group.items.length}</b></summary><div>{group.items.map(item => <label key={item.key}><input type="checkbox" checked={activeLayers.has(item.key)} onChange={() => onToggleLayer(item.key, item.sourceId)} /><span>{item.label}</span><button type="button" onClick={event => { event.preventDefault(); onSelectSource(item.sourceId); }} aria-label={`View source for ${item.label}`}>ⓘ</button></label>)}</div></details>;
+              return <details key={group.name} open={groupIndex < 3}><summary><span>{group.name}</span><b>{groupCount}/{group.items.length}</b></summary><div>{group.items.map(item => { const example = explorationLayerExampleByKey.get(item.key); return <label key={item.key} title={example ? `Example: ${example.name} — ${example.detail}` : item.label}><input type="checkbox" checked={activeLayers.has(item.key)} onChange={() => handleLayerToggle(item)} /><span>{item.label}</span><button type="button" onClick={event => { event.preventDefault(); onSelectSource(item.sourceId); }} aria-label={`View source for ${item.label}`}>ⓘ</button></label>; })}</div></details>;
             })}
           </div>
         </div>
@@ -689,17 +776,19 @@ function InteractiveExplorationMap({
           <div className="exploration-country-v2" />
           {geologicalActive && <div className="exploration-geology-overlays" style={{ opacity }}><i className="geology-v2-unit unit-a"/><i className="geology-v2-unit unit-b"/><i className="geology-v2-unit unit-c"/><i className="geology-v2-unit unit-d"/></div>}
           {structureActive && <div className="exploration-structure-overlays" style={{ opacity }}><i className="structure-v2-line structure-a"/><i className="structure-v2-line structure-b"/><i className="structure-v2-line structure-c"/></div>}
-          {geochemistryActive && <div className="exploration-geochem-overlays" style={{ opacity }}><button className="geochem-v2-spot geochem-a" aria-label="Lithium geochemical anomaly" onMouseEnter={() => showReadout({name:"Fouta lithium anomaly",type:"Stream-sediment geochemistry",detail:"Li pathfinder index: 82 · demonstration value",coordinates:"11.24° N, 12.36° W",source:"Regional Stream-Sediment Geochemistry",updated:"2020",validation:"Validated with exceptions"})} onMouseLeave={clearReadout}/><button className="geochem-v2-spot geochem-b" aria-label="Gold copper geochemical anomaly" onMouseEnter={() => showReadout({name:"Kankan Au–Cu anomaly",type:"Soil and stream geochemistry",detail:"Composite anomaly index: 76 · demonstration value",coordinates:"10.10° N, 9.38° W",source:"Regional Stream-Sediment Geochemistry",updated:"2020",validation:"Validated"})} onMouseLeave={clearReadout}/><button className="geochem-v2-spot geochem-c" aria-label="Nickel cobalt geochemical anomaly" onMouseEnter={() => showReadout({name:"Forest Belt Ni–Co anomaly",type:"Stream-sediment geochemistry",detail:"Ni–Co anomaly index: 64 · demonstration value",coordinates:"7.79° N, 8.86° W",source:"Regional Stream-Sediment Geochemistry",updated:"2019",validation:"Moderate confidence"})} onMouseLeave={clearReadout}/></div>}
+          {geochemistryActive && <div className="exploration-geochem-overlays" style={{ opacity }}>{geochemicalMapExamples.filter(example => activeLayers.has(example.layerKey)).map(example => <button key={example.className} className={`geochem-v2-spot ${example.className}`} aria-label={example.readout.name} onMouseEnter={() => showReadout(example.readout)} onMouseLeave={clearReadout} onFocus={() => showReadout(example.readout)} onBlur={clearReadout}><EvidenceHoverCard item={example.readout}/></button>)}</div>}
           {geophysicsActive && <div className="exploration-geophysics-overlays" style={{ opacity }}><i className="geophysics-v2-band geophysics-a"/><i className="geophysics-v2-band geophysics-b"/></div>}
           {accessActive && <div className="exploration-access-overlays" style={{ opacity }}><i className="access-v2-line road-v2"/><i className="access-v2-line rail-v2"/><i className="protected-v2-area"/><span className="exploration-port-v2">◉ Conakry Port</span></div>}
 
           <span className="exploration-region-v2 region-v2-boke">BOKÉ</span><span className="exploration-region-v2 region-v2-labe">LABÉ</span><span className="exploration-region-v2 region-v2-kindia">KINDIA</span><span className="exploration-region-v2 region-v2-kankan">KANKAN</span><span className="exploration-region-v2 region-v2-nzerekore">NZÉRÉKORÉ</span>
 
-          {activeLayers.has("occurrences") && explorationTargets.map((target, index) => <button key={`occ-${target.id}`} className={`exploration-occurrence-v2 occurrence-${index % 3}`} style={{ left: `${target.x - 3}%`, top: `${target.y + 4}%` }} aria-label={`Known occurrence near ${target.name}`} onMouseEnter={() => showReadout({name:`Historic occurrence near ${target.name}`,type:"Known mineral occurrence",detail:`Recorded commodity: ${target.commodities.join(" · ")}`,coordinates:target.coordinates,source:"National Geological Survey",updated:String(target.dataYear),validation:target.validation})} onMouseLeave={clearReadout}><i/></button>)}
+          {visibleLayerExamples.map(example => <button key={`example-${example.key}`} className={`exploration-evidence-example example-${example.kind}`} style={{ left:`${example.x}%`, top:`${example.y}%` }} aria-label={`${example.label} example: ${example.name}`} onMouseEnter={() => showReadout(example)} onMouseLeave={clearReadout} onFocus={() => showReadout(example)} onBlur={clearReadout}><i/><EvidenceHoverCard item={example}/></button>)}
 
-          {drillActive && explorationTargets.filter(target => target.evidenceLevel >= 3).map((target, index) => <button key={`drill-${target.id}`} className="exploration-drill-v2" style={{ left: `${Math.min(target.x + 10, 90)}%`, top: `${Math.min(target.y + 7 + index, 90)}%` }} aria-label={`Drill evidence near ${target.name}`} onMouseEnter={() => showReadout({name:`Drill evidence — ${target.name}`,type:"Subsurface evidence",detail:target.drillEvidence,coordinates:target.coordinates,source:"Historical Drill-Hole and Assay Archive",updated:target.lastUpdate,validation:target.validation})} onMouseLeave={clearReadout}><i/></button>)}
+          {activeLayers.has("occurrences") && explorationTargets.map((target, index) => { const readout = {name:`Historic occurrence near ${target.name}`,type:"Known mineral occurrence",detail:`Recorded commodity: ${target.commodities.join(" · ")}`,coordinates:target.coordinates,source:"National Geological Survey",updated:String(target.dataYear),validation:target.validation}; return <button key={`occ-${target.id}`} className={`exploration-occurrence-v2 occurrence-${index % 3}`} style={{ left: `${target.x - 3}%`, top: `${target.y + 4}%` }} aria-label={readout.name} onMouseEnter={() => showReadout(readout)} onMouseLeave={clearReadout} onFocus={() => showReadout(readout)} onBlur={clearReadout}><i/><EvidenceHoverCard item={readout}/></button>; })}
 
-          {activeLayers.has("exploration_targets") && targets.map(target => <button key={target.id} className={`exploration-target-v2 level-${target.evidenceLevel} ${selectedTargetId === target.id ? "selected" : ""}`} style={{ left: `${target.x}%`, top: `${target.y}%` }} onClick={() => onSelectTarget(target.id)} onMouseEnter={() => showReadout({name:target.name,type:`Level ${target.evidenceLevel} · ${target.evidenceLabel}`,detail:`${target.commodities.join(" · ")} · ${target.confidence} confidence`,coordinates:target.coordinates,source:explorationSources.find(source => source.id === target.sourceIds[0])?.agency || "National Geological Survey",updated:target.lastUpdate,validation:target.validation})} onMouseLeave={clearReadout} onFocus={() => showReadout({name:target.name,type:`Level ${target.evidenceLevel} · ${target.evidenceLabel}`,detail:`${target.commodities.join(" · ")} · ${target.confidence} confidence`,coordinates:target.coordinates,source:explorationSources.find(source => source.id === target.sourceIds[0])?.agency || "National Geological Survey",updated:target.lastUpdate,validation:target.validation})} aria-pressed={selectedTargetId === target.id} aria-label={`Select exploration target ${target.name}`}><i/><span><b>{target.name}</b><small>{target.commodities.join(" · ")}</small></span></button>)}
+          {drillActive && explorationTargets.filter(target => target.evidenceLevel >= 3).map((target, index) => { const readout = {name:`Drill evidence — ${target.name}`,type:"Subsurface evidence",detail:target.drillEvidence,coordinates:target.coordinates,source:"Historical Drill-Hole and Assay Archive",updated:target.lastUpdate,validation:target.validation}; return <button key={`drill-${target.id}`} className="exploration-drill-v2" style={{ left: `${Math.min(target.x + 10, 90)}%`, top: `${Math.min(target.y + 7 + index, 90)}%` }} aria-label={readout.name} onMouseEnter={() => showReadout(readout)} onMouseLeave={clearReadout} onFocus={() => showReadout(readout)} onBlur={clearReadout}><i/><EvidenceHoverCard item={readout}/></button>; })}
+
+          {activeLayers.has("exploration_targets") && targets.map(target => { const readout = {name:target.name,type:`Level ${target.evidenceLevel} · ${target.evidenceLabel}`,detail:`${target.commodities.join(" · ")} · ${target.confidence} confidence`,coordinates:target.coordinates,source:explorationSources.find(source => source.id === target.sourceIds[0])?.agency || "National Geological Survey",updated:target.lastUpdate,validation:target.validation}; return <button key={target.id} className={`exploration-target-v2 level-${target.evidenceLevel} ${selectedTargetId === target.id ? "selected" : ""}`} style={{ left: `${target.x}%`, top: `${target.y}%` }} onClick={() => { onSelectTarget(target.id); setSelectedEvidence(readout); }} onMouseEnter={() => showReadout(readout)} onMouseLeave={clearReadout} onFocus={() => showReadout(readout)} onBlur={clearReadout} aria-pressed={selectedTargetId === target.id} aria-label={`Select exploration target ${target.name}`}><i/><span><b>{target.name}</b><small>{target.commodities.join(" · ")}</small></span><EvidenceHoverCard item={readout}/></button>; })}
 
           {activeLayers.has("exploration_targets") && targets.length === 0 && <div className="exploration-map-empty"><b>No targets match these filters</b><span>Adjust commodity, evidence level, data age, or region.</span></div>}
         </div>
@@ -709,8 +798,8 @@ function InteractiveExplorationMap({
       </div>
 
       <div className="exploration-map-readout-v2" aria-live="polite">
-        <span className={`readout-v2-icon ${hovered ? "active" : ""}`}>⌖</span>
-        {hovered ? <><div><b>{hovered.name}</b><small>{hovered.type} · {hovered.detail}</small></div><span><small>Source</small><b>{hovered.source}</b></span><span><small>Updated</small><b>{hovered.updated}</b></span><span><small>Validation</small><b>{hovered.validation}</b></span><strong>{hovered.coordinates}</strong></> : <><div><b>{selectedTarget.name}</b><small>Hover over evidence or select a target to inspect it.</small></div><span><small>Visible layers</small><b>{activeCount}</b></span><span><small>Map zoom</small><b>{Math.round(zoom * 100)}%</b></span><strong>{selectedTarget.coordinates}</strong></>}
+        <span className={`readout-v2-icon ${currentReadout ? "active" : ""}`}>⌖</span>
+        {currentReadout ? <><div><b>{currentReadout.name}</b><small>{currentReadout.type} · {currentReadout.detail}</small></div><span><small>Source</small><b>{currentReadout.source}</b></span><span><small>Updated</small><b>{currentReadout.updated}</b></span><span><small>Validation</small><b>{currentReadout.validation}</b></span><strong>{currentReadout.coordinates}</strong></> : <><div><b>{selectedTarget.name}</b><small>Click a layer or hover over an evidence example to inspect it.</small></div><span><small>Visible layers</small><b>{activeCount}</b></span><span><small>Map zoom</small><b>{Math.round(zoom * 100)}%</b></span><strong>{selectedTarget.coordinates}</strong></>}
       </div>
     </div>
   );

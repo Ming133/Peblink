@@ -62,6 +62,14 @@ test("implements the expert-aligned interactive Exploration Intelligence workspa
   ]);
 
   assert.match(page, /function InteractiveExplorationMap/);
+  assert.match(page, /function EvidenceHoverCard/);
+  assert.match(page, /const explorationLayerExampleSeeds/);
+  const exampleSeedBlock = page.match(/const explorationLayerExampleSeeds:[\s\S]*?= \[([\s\S]*?)\n\];/);
+  assert.ok(exampleSeedBlock, "layer example seed data should exist");
+  assert.equal((exampleSeedBlock[1].match(/\["/g) ?? []).length, 46);
+  assert.match(page, /const currentReadout = hovered \|\| selectedEvidence/);
+  assert.match(page, /setSelectedEvidence\(\{ \.\.\.example/);
+  assert.match(page, /visibleLayerExamples\.map/);
   assert.match(page, /function ExplorationV2/);
   assert.match(page, /function ExplorationCompareModal/);
   assert.match(page, /role="dialog" aria-modal="true"/);
@@ -89,6 +97,9 @@ test("implements the expert-aligned interactive Exploration Intelligence workspa
   assert.match(css, /\.exploration-layer-drawer/);
   assert.match(css, /\.exploration-target-panel-v2/);
   assert.match(css, /\.exploration-drill-v2\{z-index:14\}/);
+  assert.match(css, /\.exploration-evidence-example/);
+  assert.match(css, /\.exploration-floating-tooltip/);
+  assert.match(css, /visibility:hidden/);
   assert.match(css, /\.exploration-compare-overlay/);
   assert.match(css, /\.exploration-compare-modal/);
   assert.match(css, /\.exploration-compare-grid/);
