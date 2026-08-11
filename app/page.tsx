@@ -31,11 +31,58 @@ const kpis = [
   { label: "Exploration targets", value: "27", delta: "8 high evidence", icon: "⌖", tone: "purple" },
 ];
 
-const alerts = [
-  { level: "Critical", title: "Export exceeds reported production", meta: "Forest Belt Gold · Kankan", age: "2h", color: "red" },
-  { level: "High", title: "License expires within 60 days", meta: "GUI-MIN-014 · Boké", age: "6h", color: "amber" },
-  { level: "High", title: "Expected royalty payment missing", meta: "North Ridge Bauxite · Kindia", age: "1d", color: "amber" },
-  { level: "Medium", title: "Ownership record incomplete", meta: "West Africa Minerals · Conakry", age: "2d", color: "blue" },
+type OverviewLayer = "mines" | "farms" | "rivers" | "pollution" | "alerts";
+
+type OverviewMapFeature = {
+  id: string;
+  name: string;
+  type: string;
+  detail: string;
+  coordinates: string;
+  x: number;
+  y: number;
+  width?: number;
+  angle?: number;
+  size?: "small" | "medium" | "large";
+};
+
+const overviewLayerOptions: Array<{ id: OverviewLayer; label: string; count: number }> = [
+  { id: "mines", label: "Mines", count: 4 },
+  { id: "farms", label: "Farmland", count: 3 },
+  { id: "rivers", label: "Rivers", count: 4 },
+  { id: "pollution", label: "Pollution zones", count: 3 },
+  { id: "alerts", label: "Alerts", count: 3 },
+];
+
+const overviewMapData: Record<"mines" | "farms" | "rivers" | "pollution", OverviewMapFeature[]> = {
+  mines: [
+    { id: "north-ridge", name: "North Ridge Bauxite Mine", type: "Mine · Bauxite", detail: "Active operation · Boké monitoring zone", coordinates: "11.17° N, 14.05° W", x: 27, y: 23 },
+    { id: "fouta-lithium", name: "Fouta Central Lithium Project", type: "Mine · Lithium", detail: "Development-stage demonstration site", coordinates: "10.96° N, 12.31° W", x: 48, y: 31 },
+    { id: "kankan-gold", name: "Kankan East Gold Mine", type: "Mine · Gold", detail: "Active operation · water sampling nearby", coordinates: "10.12° N, 9.34° W", x: 70, y: 49 },
+    { id: "simandou-north", name: "Simandou North Iron Mine", type: "Mine · Iron ore", detail: "Development corridor · sediment watch", coordinates: "8.91° N, 8.91° W", x: 66, y: 76 },
+  ],
+  farms: [
+    { id: "kamsar-rice", name: "Kamsar Rice Fields", type: "Farmland · Rice", detail: "Potential downstream exposure area", coordinates: "10.78° N, 14.09° W", x: 19, y: 39, size: "large" },
+    { id: "kindia-farms", name: "Kindia Pineapple Cooperative", type: "Farmland · Fruit", detail: "Irrigated agricultural demonstration area", coordinates: "10.01° N, 12.88° W", x: 43, y: 54, size: "medium" },
+    { id: "milo-farms", name: "Upper Milo Farmland", type: "Farmland · Mixed crops", detail: "Potential river-water exposure area", coordinates: "10.03° N, 9.18° W", x: 72, y: 61, size: "large" },
+  ],
+  rivers: [
+    { id: "rio-nunez", name: "Rio Nunez", type: "River · Coastal basin", detail: "Downstream of the Boké mining corridor", coordinates: "10.91° N, 14.34° W", x: 12, y: 31, width: 28, angle: 18 },
+    { id: "konkoure", name: "Konkouré River", type: "River · National waterway", detail: "Agricultural and community water-use corridor", coordinates: "10.39° N, 13.14° W", x: 30, y: 43, width: 34, angle: 9 },
+    { id: "milo", name: "Milo River", type: "River · Niger tributary", detail: "Runs beside the Kankan monitoring area", coordinates: "10.17° N, 9.39° W", x: 60, y: 43, width: 25, angle: 58 },
+    { id: "niandan", name: "Niandan River", type: "River · Upper Guinea basin", detail: "Downstream sediment monitoring route", coordinates: "9.26° N, 9.02° W", x: 52, y: 69, width: 27, angle: -18 },
+  ],
+  pollution: [
+    { id: "boke-runoff", name: "Boké Runoff Watch Zone", type: "Potential pollution · Critical", detail: "Illustrative red zone: mine runoff may reach river and rice fields", coordinates: "10.84° N, 14.11° W", x: 27, y: 34, size: "large" },
+    { id: "kankan-tailings", name: "Kankan Tailings Watch Zone", type: "Potential pollution · High", detail: "Illustrative red zone: tailings-water pathway under review", coordinates: "10.08° N, 9.29° W", x: 68, y: 54, size: "medium" },
+    { id: "simandou-sediment", name: "Simandou Sediment Watch Zone", type: "Potential pollution · Medium", detail: "Illustrative red zone: elevated sediment exposure scenario", coordinates: "8.96° N, 8.96° W", x: 63, y: 72, size: "medium" },
+  ],
+};
+
+const overviewEnvironmentalAlerts = [
+  { id: "env-001", level: "Critical", title: "Possible mine runoff entering Rio Nunez", affected: "Rio Nunez · Kamsar Rice Fields", coordinates: "10.84° N, 14.11° W", cause: "North Ridge drainage corridor", age: "18 min", color: "red" },
+  { id: "env-002", level: "High", title: "Tailings-water pathway requires sampling", affected: "Milo River · Upper Milo Farmland", coordinates: "10.08° N, 9.29° W", cause: "Kankan East monitoring area", age: "2 h", color: "amber" },
+  { id: "env-003", level: "Medium", title: "Sediment plume could move downstream", affected: "Niandan River · Nzérékoré Valley farms", coordinates: "8.96° N, 8.96° W", cause: "Simandou corridor earthworks", age: "1 d", color: "blue" },
 ];
 
 const licenses = [
@@ -236,7 +283,165 @@ function DetailDrawer({ name, onClose, exploration = false }: { name: string; on
   );
 }
 
-function Overview({ onOpen }: { onOpen: (name: string) => void }) {
+function OverviewRiskMap() {
+  const [zoom, setZoom] = useState(1);
+  const [layers, setLayers] = useState<Record<OverviewLayer, boolean>>({
+    mines: true,
+    farms: true,
+    rivers: true,
+    pollution: true,
+    alerts: true,
+  });
+  const [hoveredFeature, setHoveredFeature] = useState<OverviewMapFeature | null>(null);
+  const activeLayerCount = Object.values(layers).filter(Boolean).length;
+  const alertPositions = [{ x: 31, y: 30 }, { x: 74, y: 51 }, { x: 70, y: 70 }];
+
+  const toggleLayer = (layer: OverviewLayer) => {
+    setLayers(current => ({ ...current, [layer]: !current[layer] }));
+  };
+
+  const setAllLayers = (visible: boolean) => {
+    setLayers({ mines: visible, farms: visible, rivers: visible, pollution: visible, alerts: visible });
+  };
+
+  const changeZoom = (amount: number) => {
+    setZoom(current => Math.min(2, Math.max(0.8, Number((current + amount).toFixed(1)))));
+  };
+
+  const focusFeature = (feature: OverviewMapFeature) => setHoveredFeature(feature);
+  const clearFeature = () => setHoveredFeature(null);
+
+  return (
+    <div className="overview-risk-map">
+      <div className="overview-layer-controls" aria-label="Map layer filters">
+        <div className="layer-filter-title"><b>FILTER MAP</b><span>{activeLayerCount} of 5 layers visible</span></div>
+        <div className="layer-filter-options">
+          {overviewLayerOptions.map(option => (
+            <button
+              key={option.id}
+              className={`overview-layer-toggle layer-${option.id} ${layers[option.id] ? "active" : ""}`}
+              aria-pressed={layers[option.id]}
+              onClick={() => toggleLayer(option.id)}
+            >
+              <i /> {option.label} <b>{option.count}</b>
+            </button>
+          ))}
+        </div>
+        <div className="layer-filter-actions"><button onClick={() => setAllLayers(true)}>Show all</button><button onClick={() => setAllLayers(false)}>Clear</button></div>
+      </div>
+
+      <div className="overview-map-stage">
+        <div className="overview-zoom-tools" aria-label="Map zoom controls">
+          <button onClick={() => changeZoom(0.2)} disabled={zoom >= 2} aria-label="Zoom in">＋</button>
+          <button onClick={() => changeZoom(-0.2)} disabled={zoom <= 0.8} aria-label="Zoom out">−</button>
+          <button onClick={() => setZoom(1)} aria-label="Reset zoom">⌂</button>
+          <span>{Math.round(zoom * 100)}%</span>
+        </div>
+        <div className="overview-demo-badge"><i /> DEMONSTRATION MAP</div>
+
+        <div className="overview-map-canvas" style={{ transform: `scale(${zoom})` }}>
+          <div className="overview-country-mass" />
+          <div className="overview-terrain terrain-1" /><div className="overview-terrain terrain-2" /><div className="overview-terrain terrain-3" />
+          <div className="overview-region-boundary boundary-1" /><div className="overview-region-boundary boundary-2" /><div className="overview-region-boundary boundary-3" />
+          <span className="overview-region-label region-boke">BOKÉ</span><span className="overview-region-label region-labe">LABÉ</span>
+          <span className="overview-region-label region-kindia">KINDIA</span><span className="overview-region-label region-kankan">KANKAN</span>
+          <span className="overview-region-label region-nzerekore">NZÉRÉKORÉ</span>
+
+          {layers.rivers && overviewMapData.rivers.map(feature => (
+            <button
+              key={feature.id}
+              className="overview-river-feature"
+              style={{ left: `${feature.x}%`, top: `${feature.y}%`, width: `${feature.width}%`, transform: `rotate(${feature.angle}deg)` }}
+              onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
+              onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+              aria-label={`${feature.name}, ${feature.coordinates}`}
+            >
+              <i />
+              <span className="overview-feature-tooltip" style={{ transform: `translate(-50%, -100%) rotate(${-(feature.angle || 0)}deg)` }}>
+                <b>{feature.name}</b><small>{feature.type}</small><em>{feature.coordinates}</em>
+              </span>
+            </button>
+          ))}
+
+          {layers.farms && overviewMapData.farms.map(feature => (
+            <button
+              key={feature.id}
+              className={`overview-farm-feature ${feature.size || "medium"}`}
+              style={{ left: `${feature.x}%`, top: `${feature.y}%` }}
+              onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
+              onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+              aria-label={`${feature.name}, ${feature.coordinates}`}
+            >
+              <i />
+              <span className="overview-feature-tooltip"><b>{feature.name}</b><small>{feature.type}</small><em>{feature.coordinates}</em></span>
+            </button>
+          ))}
+
+          {layers.pollution && overviewMapData.pollution.map(feature => (
+            <button
+              key={feature.id}
+              className={`overview-pollution-feature ${feature.size || "medium"}`}
+              style={{ left: `${feature.x}%`, top: `${feature.y}%` }}
+              onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
+              onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+              aria-label={`${feature.name}, ${feature.coordinates}`}
+            >
+              <i />
+              <span className="overview-feature-tooltip"><b>{feature.name}</b><small>{feature.type}</small><em>{feature.coordinates}</em></span>
+            </button>
+          ))}
+
+          {layers.mines && overviewMapData.mines.map(feature => (
+            <button
+              key={feature.id}
+              className="overview-mine-feature"
+              style={{ left: `${feature.x}%`, top: `${feature.y}%` }}
+              onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
+              onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+              aria-label={`${feature.name}, ${feature.coordinates}`}
+            >
+              <i>◆</i>
+              <span className="overview-feature-tooltip"><b>{feature.name}</b><small>{feature.type}</small><em>{feature.coordinates}</em></span>
+            </button>
+          ))}
+
+          {layers.alerts && overviewEnvironmentalAlerts.map((alert, index) => {
+            const feature: OverviewMapFeature = { id: alert.id, name: alert.title, type: `${alert.level} alert`, detail: `Potentially affected: ${alert.affected}`, coordinates: alert.coordinates, ...alertPositions[index] };
+            return (
+              <button
+                key={alert.id}
+                className={`overview-alert-marker alert-${alert.color}`}
+                style={{ left: `${alertPositions[index].x}%`, top: `${alertPositions[index].y}%` }}
+                onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
+                onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+                aria-label={`${alert.level} alert: ${alert.title}`}
+              >
+                !
+                <span className="overview-feature-tooltip"><b>{alert.title}</b><small>{alert.affected}</small><em>{alert.coordinates}</em></span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="overview-map-legend">
+          <span><i className="legend-mine" /> Mine</span><span><i className="legend-farm" /> Farmland</span><span><i className="legend-river" /> River</span><span><i className="legend-pollution" /> Potential pollution</span><span><i className="legend-alert" /> Alert</span>
+        </div>
+        <div className="overview-map-scale">0&nbsp;&nbsp;&nbsp;50&nbsp;&nbsp;&nbsp;100 km</div>
+      </div>
+
+      <div className="overview-map-readout" aria-live="polite">
+        <span className={`readout-icon ${hoveredFeature ? "active" : ""}`}>⌖</span>
+        {hoveredFeature ? (
+          <><div><b>{hoveredFeature.name}</b><small>{hoveredFeature.detail}</small></div><strong>{hoveredFeature.coordinates}</strong></>
+        ) : (
+          <><div><b>Hover over a map feature</b><small>Names, feature details, and coordinates appear here automatically.</small></div><strong>Demo coordinates</strong></>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Overview() {
   return (
     <>
       <header className="page-heading">
@@ -246,20 +451,28 @@ function Overview({ onOpen }: { onOpen: (name: string) => void }) {
       <div className="kpi-grid">
         {kpis.map(k => <article className="kpi-card" key={k.label}><div className="kpi-top"><AppIcon>{k.icon}</AppIcon><Sparkline tone={k.tone} /></div><p>{k.label}</p><div className="kpi-value">{k.value}</div><small className={k.tone}>{k.delta}</small></article>)}
       </div>
-      <section className="main-grid">
-        <article className="panel map-panel">
-          <div className="panel-head"><div><span className="section-kicker">NATIONAL ACTIVITY</span><h3>Mining activity & infrastructure</h3></div><div className="panel-actions"><button>☷ Layers <b>7</b></button><button>↗</button></div></div>
-          <MapVisual onSelect={onOpen} />
+      <section className="overview-intelligence-grid">
+        <article className="panel overview-map-panel">
+          <div className="panel-head"><div><span className="section-kicker">NATIONAL ENVIRONMENTAL INTELLIGENCE</span><h3>Mining, farmland, rivers & potential pollution</h3></div><div className="panel-actions"><button>Live layers <b>5</b></button><button aria-label="Open map options">•••</button></div></div>
+          <OverviewRiskMap />
         </article>
-        <div className="right-stack">
+        <div className="overview-side-stack">
+          <article className="panel overview-environment-alerts">
+            <div className="panel-head"><div><span className="section-kicker red">ENVIRONMENTAL EXPOSURE</span><h3>Potential contamination alerts</h3></div><button className="text-btn">3 active</button></div>
+            <div className="overview-alert-summary"><b>1</b><span>critical scenario</span><i /><b>2</b><span>areas require sampling</span></div>
+            {overviewEnvironmentalAlerts.map(alert => (
+              <button className="overview-environment-alert" key={alert.id}>
+                <i className={alert.color}>{alert.level === "Critical" ? "!" : "△"}</i>
+                <span><b>{alert.title}</b><small><strong>Potentially affected:</strong> {alert.affected}</small><small><strong>Coordinates:</strong> {alert.coordinates}</small><em>{alert.cause}</em></span>
+                <time>{alert.age}</time>
+              </button>
+            ))}
+            <p className="overview-alert-disclaimer"><b>i</b> Illustrative alerts only. They are not real environmental findings and require field sampling before any conclusion.</p>
+          </article>
           <article className="panel commodity-panel">
             <div className="panel-head"><div><span className="section-kicker">PRODUCTION</span><h3>By commodity</h3></div><button className="text-btn">Volume⌄</button></div>
             {[["Bauxite", 74, "48.7 Mt"], ["Iron ore", 39, "10.6 Mt"], ["Gold", 24, "7.2 Mt"], ["Diamond", 12, "1.4 Mt"], ["Other", 7, "0.5 Mt"]].map(([n,w,v],i)=><div className="bar-row" key={n}><span>{n}</span><div><i style={{width:`${w}%`}} className={`bar b${i}`}/></div><b>{v}</b></div>)}
             <div className="commodity-foot"><span><i/> Production volume</span><button>View intelligence →</button></div>
-          </article>
-          <article className="panel alert-panel">
-            <div className="panel-head"><div><span className="section-kicker red">ACTION REQUIRED</span><h3>Priority alerts</h3></div><button className="text-btn">View all 12 →</button></div>
-            {alerts.map(a=><button className="alert-row" onClick={()=>onOpen(a.meta.split(" · ")[0])} key={a.title}><i className={a.color}>{a.level === "Critical" ? "!" : "△"}</i><span><b>{a.title}</b><small>{a.meta}</small></span><time>{a.age}</time></button>)}
           </article>
         </div>
       </section>
@@ -400,7 +613,7 @@ export default function Home() {
       </aside>
       <main className={`content ${collapsed ? "wide" : ""}`}>
         <div className="mobile-title">{pageTitle}</div>
-        {page==="overview" && <Overview onOpen={setSelected}/>}
+        {page==="overview" && <Overview />}
         {page==="exploration" && <Exploration onOpen={setSelected}/>}
         {page==="licenses" && <Licenses onOpen={setSelected}/>}
         {!["overview","exploration","licenses"].includes(page) && <GenericModule page={page as Exclude<PageKey,"overview"|"exploration"|"licenses">} onOpen={setSelected}/>}
