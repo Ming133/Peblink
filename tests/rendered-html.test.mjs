@@ -70,6 +70,8 @@ test("implements the expert-aligned interactive Exploration Intelligence workspa
   assert.match(page, /const currentReadout = hovered \|\| selectedEvidence/);
   assert.match(page, /setSelectedEvidence\(\{ \.\.\.example/);
   assert.match(page, /visibleLayerExamples\.map/);
+  assert.match(page, /SELECTED TARGET AREA/);
+  assert.match(page, /currently selected exploration target area/);
   assert.match(page, /function ExplorationV2/);
   assert.match(page, /function ExplorationCompareModal/);
   assert.match(page, /role="dialog" aria-modal="true"/);
@@ -100,6 +102,7 @@ test("implements the expert-aligned interactive Exploration Intelligence workspa
   assert.match(css, /\.exploration-evidence-example/);
   assert.match(css, /\.exploration-floating-tooltip/);
   assert.match(css, /visibility:hidden/);
+  assert.match(css, /\.exploration-target-v2\.selected>\.exploration-floating-tooltip\{background:#183a55/);
   assert.match(css, /\.exploration-compare-overlay/);
   assert.match(css, /\.exploration-compare-modal/);
   assert.match(css, /\.exploration-compare-grid/);
