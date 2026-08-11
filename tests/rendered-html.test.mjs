@@ -63,6 +63,13 @@ test("implements the expert-aligned interactive Exploration Intelligence workspa
 
   assert.match(page, /function InteractiveExplorationMap/);
   assert.match(page, /function ExplorationV2/);
+  assert.match(page, /function ExplorationCompareModal/);
+  assert.match(page, /role="dialog" aria-modal="true"/);
+  assert.match(page, /Choose Area \{index === 0 \? "A" : "B"\}/);
+  assert.match(page, /Compare two exploration areas/);
+  assert.match(page, /setShowCompareModal\(true\)/);
+  assert.match(page, /Environmental constraints/);
+  assert.match(page, /Recommended next action/);
   assert.match(page, /const explorationLayerGroups/);
   assert.match(page, /selectedCommodities/);
   assert.match(page, /aria-pressed=\{selectedTargetId === target\.id\}/);
@@ -79,5 +86,8 @@ test("implements the expert-aligned interactive Exploration Intelligence workspa
   assert.match(css, /\.exploration-workspace-v2/);
   assert.match(css, /\.exploration-layer-drawer/);
   assert.match(css, /\.exploration-target-panel-v2/);
+  assert.match(css, /\.exploration-compare-overlay/);
+  assert.match(css, /\.exploration-compare-modal/);
+  assert.match(css, /\.exploration-compare-grid/);
   assert.match(css, /@media\(max-width:900px\).*\.exploration-workspace-v2/s);
 });

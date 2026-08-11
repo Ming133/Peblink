@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type PageKey = "overview" | "exploration" | "licenses" | "ownership" | "production" | "export" | "revenue" | "infrastructure" | "environment" | "alerts" | "quality" | "reports" | "administration";
 
@@ -716,6 +716,81 @@ function InteractiveExplorationMap({
   );
 }
 
+function ExplorationCompareModal({
+  open,
+  selectedIds,
+  onToggle,
+  onClear,
+  onClose,
+  onViewTarget,
+}: {
+  open: boolean;
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  onClear: () => void;
+  onClose: () => void;
+  onViewTarget: (id: string) => void;
+}) {
+  if (!open) return null;
+  const selectedTargets = selectedIds.map(id => explorationTargets.find(target => target.id === id)).filter(Boolean) as ExplorationTargetRecord[];
+  const comparisonRows: Array<[string, (target: ExplorationTargetRecord) => string]> = [
+    ["Commodity", target => target.commodities.join(" · ")],
+    ["Evidence level", target => `Level ${target.evidenceLevel} — ${target.evidenceLabel}`],
+    ["Confidence", target => target.confidence],
+    ["Geological setting", target => target.geologicalSetting],
+    ["Surface evidence", target => target.surfaceEvidence],
+    ["Drill evidence", target => target.drillEvidence],
+    ["Infrastructure", target => target.infrastructure],
+    ["Environmental constraints", target => target.environmentalConstraint],
+    ["Missing evidence", target => target.missingEvidence],
+    ["Recommended next action", target => target.recommendation],
+  ];
+
+  return (
+    <div className="exploration-compare-overlay" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="exploration-compare-modal" role="dialog" aria-modal="true" aria-labelledby="exploration-compare-title">
+        <header className="exploration-compare-modal-head">
+          <div><span className="section-kicker purple-text">SIMPLE COMPARE MODE</span><h2 id="exploration-compare-title">Compare two exploration areas</h2><p>Choose Area A and Area B below. The comparison appears immediately.</p></div>
+          <div><span className={selectedIds.length === 2 ? "ready" : ""}>{selectedIds.length}/2 selected</span><button onClick={onClose} aria-label="Close comparison">×</button></div>
+        </header>
+
+        <div className="exploration-compare-modal-body">
+          <aside className="exploration-compare-picker">
+            <div className="exploration-compare-slots">
+              {[0,1].map(index => {
+                const target = selectedTargets[index];
+                return <div className={target ? "filled" : ""} key={index}><i>{index === 0 ? "A" : "B"}</i>{target ? <><span><b>{target.name}</b><small>{target.region} · {target.commodities.join(" · ")}</small></span><button onClick={() => onToggle(target.id)} aria-label={`Remove ${target.name} from comparison`}>×</button></> : <span><b>Choose Area {index === 0 ? "A" : "B"}</b><small>Select an area from the list</small></span>}</div>;
+              })}
+            </div>
+            <div className="exploration-compare-picker-head"><b>Available areas</b><span>{selectedIds.length === 2 ? "Remove one area to choose another" : "Click an area to add it"}</span></div>
+            <div className="exploration-compare-target-list">
+              {explorationTargets.map(target => {
+                const selectedIndex = selectedIds.indexOf(target.id);
+                const selected = selectedIndex >= 0;
+                const disabled = selectedIds.length === 2 && !selected;
+                return <button key={target.id} className={selected ? "selected" : ""} disabled={disabled} aria-pressed={selected} onClick={() => onToggle(target.id)}><i>{selected ? (selectedIndex === 0 ? "A" : "B") : "+"}</i><span><b>{target.name}</b><small>{target.id} · {target.region} · {target.commodities.join(" · ")}</small></span><em>Level {target.evidenceLevel}</em></button>;
+              })}
+            </div>
+          </aside>
+
+          <main className="exploration-compare-results">
+            {selectedTargets.length < 2 ? <div className="exploration-compare-empty"><i>⇄</i><h3>{selectedTargets.length === 0 ? "Choose the first area" : "Now choose the second area"}</h3><p>Once Area A and Area B are selected, their evidence will be shown side by side here.</p></div> : <>
+              <div className="exploration-compare-result-head"><span>Comparison results</span><b>Evidence supports review prioritization — not a discovery probability.</b></div>
+              <div className="exploration-compare-grid">
+                <div className="compare-grid-label compare-grid-top">Area</div>
+                {selectedTargets.map((target,index) => <div className="compare-grid-target" key={target.id}><i>{index === 0 ? "A" : "B"}</i><span><b>{target.name}</b><small>{target.id} · {target.coordinates}</small></span><button onClick={() => onViewTarget(target.id)}>View on map</button></div>)}
+                {comparisonRows.map(([label,getValue]) => <div className="compare-grid-row" key={label}><b>{label}</b>{selectedTargets.map(target => <span className={label === "Recommended next action" ? "recommended" : ""} key={target.id}>{getValue(target)}</span>)}</div>)}
+              </div>
+            </>}
+          </main>
+        </div>
+
+        <footer className="exploration-compare-modal-foot"><button onClick={onClear} disabled={selectedIds.length === 0}>Clear both</button><span>{selectedIds.length === 2 ? "Comparison ready" : `Select ${2-selectedIds.length} more area${selectedIds.length === 0 ? "s" : ""}`}</span><button className="primary" onClick={onClose}>Done</button></footer>
+      </section>
+    </div>
+  );
+}
+
 function ExplorationV2() {
   const [activeTab, setActiveTab] = useState<"ranking"|"matrix"|"metadata">("ranking");
   const [selectedTargetId, setSelectedTargetId] = useState("CM-07");
@@ -726,6 +801,7 @@ function ExplorationV2() {
   const [layerOpacity, setLayerOpacity] = useState(.72);
   const [selectedSourceId, setSelectedSourceId] = useState("geo-stream");
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
   const [notice, setNotice] = useState("");
   const commodities = ["Bauxite","Iron ore","Gold","Lithium","Nickel","Cobalt","Copper","Graphite","Rare earth elements","Vanadium","Tungsten","Manganese","Other critical minerals"];
   const confidenceRank = { Low: 1, Moderate: 2, High: 3 };
@@ -743,7 +819,14 @@ function ExplorationV2() {
   });
   const selectedTarget = explorationTargets.find(target => target.id === selectedTargetId) || explorationTargets[0];
   const selectedSource = explorationSources.find(source => source.id === selectedSourceId) || explorationSources[0];
-  const comparedTargets = compareIds.map(id => explorationTargets.find(target => target.id === id)).filter(Boolean) as ExplorationTargetRecord[];
+  useEffect(() => {
+    if (!showCompareModal) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setShowCompareModal(false); };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", closeOnEscape); };
+  }, [showCompareModal]);
 
   const toggleCommodity = (commodity: string) => setSelectedCommodities(current => current.includes(commodity) ? current.filter(item => item !== commodity) : [...current, commodity]);
   const toggleLevel = (level: number) => setSelectedLevels(current => { const next = new Set(current); if (next.has(level)) next.delete(level); else next.add(level); return next; });
@@ -751,7 +834,8 @@ function ExplorationV2() {
   const toggleLayer = (key: string, sourceId: string) => { setActiveLayers(current => { const next = new Set(current); if (next.has(key)) next.delete(key); else next.add(key); return next; }); setSelectedSourceId(sourceId); };
   const resetFilters = () => { setSelectedCommodities([]); setSelectedLevels(new Set([1,2,3,4])); setFilters({ region: "All regions", evidenceType: "All evidence types", source: "All source agencies", confidence: "Any confidence", age: "Any age", access: "Any access" }); };
   const selectTarget = (id: string) => { setSelectedTargetId(id); const target = explorationTargets.find(item => item.id === id); if (target?.sourceIds[0]) setSelectedSourceId(target.sourceIds[0]); };
-  const toggleCompare = (id: string) => setCompareIds(current => current.includes(id) ? current.filter(item => item !== id) : current.length < 2 ? [...current, id] : [current[1], id]);
+  const toggleCompare = (id: string) => setCompareIds(current => current.includes(id) ? current.filter(item => item !== id) : current.length < 2 ? [...current, id] : current);
+  const openCompare = (id?: string) => { if (id) setCompareIds(current => current.includes(id) || current.length === 2 ? current : [...current,id]); setShowCompareModal(true); };
   const flashNotice = (message: string) => { setNotice(message); window.setTimeout(() => setNotice(""), 2200); };
 
   const saveView = () => {
@@ -780,7 +864,8 @@ function ExplorationV2() {
   return (
     <>
       {notice && <div className="exploration-toast" role="status">✓ {notice}</div>}
-      <header className="page-heading exploration-heading"><div><div className="breadcrumb purple-text">EXPLORATION INTELLIGENCE <span>/</span> NATIONAL VIEW</div><h1>Critical Minerals Exploration Intelligence</h1><p>Evidence-based evaluation of geological opportunity, data confidence, and exploration maturity.</p></div><div className="heading-actions"><button className="select-btn" onClick={saveView}>Save view</button><button className="select-btn" onClick={() => comparedTargets.length === 2 ? flashNotice("Comparison is shown below the map") : flashNotice("Add two targets to comparison")}>Compare {compareIds.length}/2</button><details className="exploration-export-menu"><summary>⇩ Export evidence summary</summary><div>{(["PDF","CSV","Image","Memo"] as const).map(format => <button key={format} onClick={() => exportEvidence(format)}>{format === "Memo" ? "Technical memo" : format}</button>)}</div></details></div></header>
+      <ExplorationCompareModal open={showCompareModal} selectedIds={compareIds} onToggle={toggleCompare} onClear={() => setCompareIds([])} onClose={() => setShowCompareModal(false)} onViewTarget={id => { selectTarget(id); setShowCompareModal(false); }}/>
+      <header className="page-heading exploration-heading"><div><div className="breadcrumb purple-text">EXPLORATION INTELLIGENCE <span>/</span> NATIONAL VIEW</div><h1>Critical Minerals Exploration Intelligence</h1><p>Evidence-based evaluation of geological opportunity, data confidence, and exploration maturity.</p></div><div className="heading-actions"><button className="select-btn" onClick={saveView}>Save view</button><button className="select-btn exploration-compare-open" onClick={() => openCompare()}>⇄ Compare areas <b>{compareIds.length}/2</b></button><details className="exploration-export-menu"><summary>⇩ Export evidence summary</summary><div>{(["PDF","CSV","Image","Memo"] as const).map(format => <button key={format} onClick={() => exportEvidence(format)}>{format === "Memo" ? "Technical memo" : format}</button>)}</div></details></div></header>
       <div className="disclaimer exploration-disclaimer-v2"><b>i</b><span><strong>Exploration interpretation notice</strong> Exploration indicators represent evidence for further investigation and do not confirm the existence of an economically viable mineral deposit.</span><button onClick={() => flashNotice("Methodology: evidence strength, confidence, recency, access and visible constraints")}>View methodology</button></div>
 
       <div className="commodity-strip exploration-commodity-v2"><b>Commodity focus</b><div><button className={selectedCommodities.length === 0 ? "selected" : ""} onClick={() => setSelectedCommodities([])}>All commodities{selectedCommodities.length === 0 ? " ✓" : ""}</button>{commodities.map(commodity => <button className={selectedCommodities.includes(commodity) ? "selected" : ""} aria-pressed={selectedCommodities.includes(commodity)} onClick={() => toggleCommodity(commodity)} key={commodity}>{commodity}{selectedCommodities.includes(commodity) ? " ✓" : ""}</button>)}</div><span>{filteredTargets.length} target areas</span></div>
@@ -806,7 +891,7 @@ function ExplorationV2() {
         </article>
 
         <aside className="panel exploration-target-panel-v2">
-          <div className="panel-head"><div><span className="section-kicker purple-text">SELECTED TARGET</span><h3>{selectedTarget.name}</h3></div><button onClick={() => toggleCompare(selectedTarget.id)}>{compareIds.includes(selectedTarget.id) ? "Remove" : "+ Compare"}</button></div>
+          <div className="panel-head"><div><span className="section-kicker purple-text">SELECTED TARGET</span><h3>{selectedTarget.name}</h3></div><button onClick={() => openCompare(selectedTarget.id)}>{compareIds.includes(selectedTarget.id) ? "Open comparison" : "+ Compare this area"}</button></div>
           <div className="exploration-target-scroll-v2">
             <div className="exploration-target-identity"><span className={`evidence-level-v2 level-${selectedTarget.evidenceLevel}`}>LEVEL {selectedTarget.evidenceLevel}</span><b>{selectedTarget.evidenceLabel}</b><small>{selectedTarget.id} · {selectedTarget.region} · {selectedTarget.coordinates}</small><div>{selectedTarget.commodities.map(commodity => <i key={commodity}>{commodity}</i>)}</div></div>
             <div className="exploration-target-metrics-v2"><span>Stage<b>{selectedTarget.stage}</b></span><span>Confidence<b>{selectedTarget.confidence}</b></span><span>Coverage<b>{selectedTarget.coverage}</b></span><span>Last update<b>{selectedTarget.lastUpdate}</b></span></div>
@@ -819,8 +904,6 @@ function ExplorationV2() {
         </aside>
       </section>
 
-      {comparedTargets.length > 0 && <section className="exploration-compare-v2"><div><span className="section-kicker purple-text">COMPARE MODE</span><h3>{comparedTargets.length === 2 ? "Two-target evidence comparison" : "Select one more target"}</h3></div>{comparedTargets.map(target => <article key={target.id}><button onClick={() => toggleCompare(target.id)}>×</button><b>{target.name}</b><span>{target.commodities.join(" · ")}</span><small>Level {target.evidenceLevel} · {target.confidence} confidence</small><p><strong>Drilling:</strong> {target.drillEvidence}</p><p><strong>Data gap:</strong> {target.missingEvidence}</p><em>Next: {target.recommendation}</em></article>)}</section>}
-
       <section className="exploration-summary-grid-v2">
         <article className="panel exploration-interpretation-v2"><div className="panel-head"><div><span className="section-kicker purple-text">RESPONSIBLE INTERPRETATION</span><h3>{selectedTarget.name}</h3></div><span className={`evidence-level-v2 level-${selectedTarget.evidenceLevel}`}>LEVEL {selectedTarget.evidenceLevel}</span></div><div><b>Interpretation</b><p>This area contains geological indicators that may justify additional exploration.</p><b>Supporting evidence</b><p>{selectedTarget.geologicalSetting} {selectedTarget.surfaceEvidence}</p><b>Limitations</b><p>{selectedTarget.limitations}</p></div></article>
         <article className="panel structured-summary structured-summary-v2"><div className="panel-head"><div><span className="section-kicker purple-text">STRUCTURED EVIDENCE SUMMARY</span><h3>Five-part evidence summary</h3></div><button onClick={() => exportEvidence("CSV")}>CSV ↗</button></div>{[["1","Geological favorability",selectedTarget.geologicalSetting],["2","Mineral or elemental evidence",selectedTarget.surfaceEvidence],["3","Subsurface evidence",selectedTarget.drillEvidence],["4","Infrastructure and access",selectedTarget.infrastructure],["5","Uncertainty and data gaps",selectedTarget.missingEvidence]].map(item => <div key={item[0]}><i>{item[0]}</i><span><b>{item[1]}</b><p>{item[2]}</p></span></div>)}</article>
@@ -828,7 +911,7 @@ function ExplorationV2() {
       </section>
 
       <div className="exploration-tabs exploration-tabs-v2"><button className={activeTab==="ranking"?"active":""} onClick={() => setActiveTab("ranking")}>Areas Requiring Further Evaluation <b>{filteredTargets.length}</b></button><button className={activeTab==="matrix"?"active":""} onClick={() => setActiveTab("matrix")}>Evidence Matrix</button><button className={activeTab==="metadata"?"active":""} onClick={() => setActiveTab("metadata")}>Data Sources & Metadata</button></div>
-      {activeTab === "ranking" && <article className="panel table-panel exploration-table exploration-table-v2"><div className="panel-head"><div><span className="section-kicker purple-text">RANKED REVIEW QUEUE</span><h3>Areas Requiring Further Evaluation</h3></div><button className="text-btn">Evidence 45% · confidence 25% · access 15% · constraints 15% ⓘ</button></div><div className="table-scroll"><table><thead><tr><th>Rank</th><th>Area</th><th>Commodity</th><th>Evidence level</th><th>Geological favorability</th><th>Surface evidence</th><th>Drill evidence</th><th>Data confidence</th><th>Infrastructure</th><th>Environmental constraint</th><th>Recommended action</th><th>Compare</th></tr></thead><tbody>{filteredTargets.map((target,index) => <tr key={target.id} className={selectedTargetId === target.id ? "selected-row" : ""} onClick={() => selectTarget(target.id)}><td><b className="rank">{String(index+1).padStart(2,"0")}</b></td><td><b>{target.name}</b><small>{target.id} · {target.region}</small></td><td>{target.commodities.join(" · ")}</td><td><span className={`evidence-table-level level-${target.evidenceLevel}`}>Level {target.evidenceLevel}</span></td><td>{target.favorability}</td><td>{target.matrix[2]}</td><td>{target.matrix[5]}</td><td>{target.confidence}</td><td>{target.access}</td><td>{target.environmentalConstraint.split(" — ")[0]}</td><td><b>{target.recommendation}</b></td><td><button className={compareIds.includes(target.id) ? "compare-added" : ""} onClick={event => { event.stopPropagation(); toggleCompare(target.id); }}>{compareIds.includes(target.id) ? "✓ Added" : "+ Add"}</button></td></tr>)}</tbody></table></div>{filteredTargets.length === 0 ? <div className="exploration-empty-table">No target areas match the current filters.</div> : <p className="table-note">Ranking supports review prioritization. It is explainable and is not an objective probability of discovery.</p>}</article>}
+      {activeTab === "ranking" && <article className="panel table-panel exploration-table exploration-table-v2"><div className="panel-head"><div><span className="section-kicker purple-text">RANKED REVIEW QUEUE</span><h3>Areas Requiring Further Evaluation</h3></div><button className="text-btn">Evidence 45% · confidence 25% · access 15% · constraints 15% ⓘ</button></div><div className="table-scroll"><table><thead><tr><th>Rank</th><th>Area</th><th>Commodity</th><th>Evidence level</th><th>Geological favorability</th><th>Surface evidence</th><th>Drill evidence</th><th>Data confidence</th><th>Infrastructure</th><th>Environmental constraint</th><th>Recommended action</th><th>Compare</th></tr></thead><tbody>{filteredTargets.map((target,index) => <tr key={target.id} className={selectedTargetId === target.id ? "selected-row" : ""} onClick={() => selectTarget(target.id)}><td><b className="rank">{String(index+1).padStart(2,"0")}</b></td><td><b>{target.name}</b><small>{target.id} · {target.region}</small></td><td>{target.commodities.join(" · ")}</td><td><span className={`evidence-table-level level-${target.evidenceLevel}`}>Level {target.evidenceLevel}</span></td><td>{target.favorability}</td><td>{target.matrix[2]}</td><td>{target.matrix[5]}</td><td>{target.confidence}</td><td>{target.access}</td><td>{target.environmentalConstraint.split(" — ")[0]}</td><td><b>{target.recommendation}</b></td><td><button className={compareIds.includes(target.id) ? "compare-added" : ""} onClick={event => { event.stopPropagation(); openCompare(target.id); }}>{compareIds.includes(target.id) ? "Open" : "Compare"}</button></td></tr>)}</tbody></table></div>{filteredTargets.length === 0 ? <div className="exploration-empty-table">No target areas match the current filters.</div> : <p className="table-note">Ranking supports review prioritization. It is explainable and is not an objective probability of discovery.</p>}</article>}
       {activeTab === "matrix" && <article className="panel table-panel exploration-table exploration-table-v2"><div className="panel-head"><div><span className="section-kicker purple-text">COMPARATIVE EVIDENCE</span><h3>Exploration target evidence matrix</h3></div><div className="matrix-legend"><span>● Strong</span><span>● Moderate</span><span>● Weak</span><span>○ Missing</span><span>⊘ Restricted</span></div></div><div className="table-scroll"><table><thead><tr>{["Target","Geological context","Known occurrence","Surface geochemistry","Geophysics","Remote sensing","Drilling","Resource appraisal","Metadata completeness","Data recency","Overall confidence"].map(label => <th key={label}>{label}</th>)}</tr></thead><tbody>{filteredTargets.map(target => <tr key={target.id} onClick={() => selectTarget(target.id)}><td><b>{target.name}</b></td>{target.matrix.map((value,index) => <td key={index} className={`matrix-${value.toLowerCase()}`}>{value}</td>)}<td>{target.dataYear}</td><td>{target.confidence}</td></tr>)}</tbody></table></div></article>}
       {activeTab === "metadata" && <article className="panel exploration-metadata-v2"><div className="panel-head"><div><span className="section-kicker purple-text">SOURCE TRANSPARENCY</span><h3>Data sources and selected-layer metadata</h3></div><span className="status active">{selectedSource.validation}</span></div><div className="exploration-source-layout-v2"><aside>{explorationSources.map(source => <button key={source.id} className={selectedSourceId === source.id ? "active" : ""} onClick={() => setSelectedSourceId(source.id)}><b>{source.name}</b><small>{source.agency}</small><span>{source.confidence} confidence</span></button>)}</aside><div><h4>{selectedSource.name}</h4><p>{selectedSource.agency} · {selectedSource.reference}</p><div className="metadata-grid metadata-grid-v2">{[["Source agency",selectedSource.agency],["Dataset name",selectedSource.name],["Publication date",selectedSource.publication],["Collection date",selectedSource.collection],["Analytical method",selectedSource.method],["Coordinate system",selectedSource.coordinateSystem],["Spatial precision",selectedSource.precision],["Detection limit",selectedSource.detectionLimit],["Data license",selectedSource.license],["Access status",selectedSource.access],["Validation status",selectedSource.validation],["Confidence level",selectedSource.confidence],["Source reference",selectedSource.reference]].map(([label,value]) => <span key={label}><small>{label}</small><b>{value}</b></span>)}</div><div className="limitations"><b>Known limitation — visible to users</b><p>{selectedSource.limitation}</p></div></div></div></article>}
 
