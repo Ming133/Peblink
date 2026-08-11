@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { localeOptions, type Locale, translateText, useDocumentTranslation } from "./i18n";
 
 type PageKey = "overview" | "exploration" | "licenses" | "ownership" | "production" | "export" | "revenue" | "infrastructure" | "environment" | "alerts" | "quality" | "reports" | "administration";
 
@@ -665,6 +666,7 @@ function InteractiveExplorationMap({
   onSelectSource,
   opacity,
   onOpacityChange,
+  locale,
 }: {
   targets: ExplorationTargetRecord[];
   selectedTargetId: string;
@@ -674,6 +676,7 @@ function InteractiveExplorationMap({
   onSelectSource: (sourceId: string) => void;
   opacity: number;
   onOpacityChange: (opacity: number) => void;
+  locale: Locale;
 }) {
   const [zoom, setZoom] = useState(1);
   const [showLayers, setShowLayers] = useState(false);
@@ -726,10 +729,10 @@ function InteractiveExplorationMap({
     context.moveTo(120, 235); context.lineTo(275, 130); context.lineTo(500, 155); context.lineTo(675, 225); context.lineTo(905, 185); context.lineTo(1195, 330); context.lineTo(1110, 515); context.lineTo(1205, 650); context.lineTo(925, 700); context.lineTo(685, 625); context.lineTo(430, 710); context.lineTo(230, 590); context.lineTo(105, 430); context.closePath(); context.fill();
     context.fillStyle = "#102a43";
     context.font = "bold 30px Georgia";
-    context.fillText("National Multi-layer Exploration Evidence Map", 55, 58);
+    context.fillText(translateText("National multi-layer exploration evidence map", locale), 55, 58);
     context.font = "17px Arial";
     context.fillStyle = "#536977";
-    context.fillText(`${basemap} basemap · ${activeCount} visible layers · ${targets.length} matching targets`, 55, 88);
+    context.fillText(translateText(`${basemap} basemap · ${activeCount} visible layers · ${targets.length} matching targets`, locale), 55, 88);
     if (activeLayers.has("exploration_targets")) targets.forEach(target => {
       const colors = ["#bfb4c9", "#a98295", "#6941a5", "#315f50"];
       const x = 70 + (target.x / 100) * 1260;
@@ -737,10 +740,10 @@ function InteractiveExplorationMap({
       context.fillStyle = colors[target.evidenceLevel - 1];
       context.beginPath(); context.arc(x, y, 13, 0, Math.PI * 2); context.fill();
       context.fillStyle = "#263f50"; context.font = "bold 16px Arial"; context.fillText(target.name, x + 20, y - 3);
-      context.fillStyle = "#667b88"; context.font = "13px Arial"; context.fillText(`${target.commodities.join(" · ")} · Level ${target.evidenceLevel}`, x + 20, y + 16);
+      context.fillStyle = "#667b88"; context.font = "13px Arial"; context.fillText(translateText(`${target.commodities.join(" · ")} · Level ${target.evidenceLevel}`, locale), x + 20, y + 16);
     });
     context.fillStyle = "#ffffffdd"; context.fillRect(45, 742, 1310, 38);
-    context.fillStyle = "#657684"; context.font = "14px Arial"; context.fillText("Demonstration data only · Targets indicate evidence for further investigation, not confirmed deposits.", 62, 767);
+    context.fillStyle = "#657684"; context.font = "14px Arial"; context.fillText(translateText("Demonstration data only · Targets indicate evidence for further investigation, not confirmed deposits.", locale), 62, 767);
     canvas.toBlob(blob => { if (!blob) return; const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "national-exploration-evidence-map.png"; link.click(); URL.revokeObjectURL(link.href); }, "image/png");
   };
 
@@ -880,7 +883,7 @@ function ExplorationCompareModal({
   );
 }
 
-function ExplorationV2() {
+function ExplorationV2({ locale }: { locale: Locale }) {
   const [activeTab, setActiveTab] = useState<"ranking"|"matrix"|"metadata">("ranking");
   const [selectedTargetId, setSelectedTargetId] = useState("CM-07");
   const [selectedCommodities, setSelectedCommodities] = useState<string[]>(["Lithium","Nickel","Cobalt"]);
@@ -942,12 +945,12 @@ function ExplorationV2() {
 
   const exportEvidence = (format: "PDF"|"CSV"|"Image"|"Memo") => {
     const safeName = selectedTarget.name.toLowerCase().replace(/[^a-z0-9]+/g,"-");
-    const lines = ["Exploration Evidence Summary", selectedTarget.name, `Target ID: ${selectedTarget.id}`, `Commodity: ${selectedTarget.commodities.join(" · ")}`, `Evidence level: Level ${selectedTarget.evidenceLevel} — ${selectedTarget.evidenceLabel}`, `Confidence: ${selectedTarget.confidence}`, `Interpretation: This area contains geological indicators that may justify additional exploration.`, `Geological favorability: ${selectedTarget.geologicalSetting}`, `Mineral evidence: ${selectedTarget.surfaceEvidence}`, `Subsurface evidence: ${selectedTarget.drillEvidence}`, `Infrastructure and access: ${selectedTarget.infrastructure}`, `Uncertainty and data gaps: ${selectedTarget.missingEvidence}`, `Recommended next action: ${selectedTarget.recommendation}`, "Disclaimer: This evidence does not confirm an economically viable mineral deposit."];
+    const lines = ["Exploration Evidence Summary", selectedTarget.name, `Target ID: ${selectedTarget.id}`, `Commodity: ${selectedTarget.commodities.join(" · ")}`, `Evidence level: Level ${selectedTarget.evidenceLevel} — ${selectedTarget.evidenceLabel}`, `Confidence: ${selectedTarget.confidence}`, `Interpretation: This area contains geological indicators that may justify additional exploration.`, `Geological favorability: ${selectedTarget.geologicalSetting}`, `Mineral evidence: ${selectedTarget.surfaceEvidence}`, `Subsurface evidence: ${selectedTarget.drillEvidence}`, `Infrastructure and access: ${selectedTarget.infrastructure}`, `Uncertainty and data gaps: ${selectedTarget.missingEvidence}`, `Recommended next action: ${selectedTarget.recommendation}`, "Disclaimer: This evidence does not confirm an economically viable mineral deposit."].map(line => translateText(line, locale));
     if (format === "PDF") { window.print(); flashNotice("Print view opened — choose Save as PDF"); return; }
     if (format === "CSV") { downloadText(`${safeName}-evidence.csv`, `Section,Value\n${lines.slice(2).map(line => { const [label,...value] = line.split(": "); return `"${label}","${value.join(": ").replaceAll('"','""')}"`; }).join("\n")}`, "text/csv"); return; }
     if (format === "Memo") { downloadText(`${safeName}-technical-memo.txt`, lines.join("\n\n"), "text/plain"); return; }
     const canvas = document.createElement("canvas"); canvas.width = 1200; canvas.height = 630; const context = canvas.getContext("2d");
-    if (context) { context.fillStyle="#102a43"; context.fillRect(0,0,1200,630); context.fillStyle="#d2ad53"; context.fillRect(0,0,1200,8); context.fillStyle="#ffffff"; context.font="bold 34px Georgia"; context.fillText("Exploration Evidence Summary",70,88); context.font="bold 46px Georgia"; context.fillText(selectedTarget.name,70,160); context.fillStyle="#cbb8e5"; context.font="22px Arial"; context.fillText(`${selectedTarget.commodities.join(" · ")}  |  Level ${selectedTarget.evidenceLevel} — ${selectedTarget.evidenceLabel}`,70,205); context.fillStyle="#ffffff"; context.font="20px Arial"; [selectedTarget.geologicalSetting,selectedTarget.surfaceEvidence,selectedTarget.drillEvidence,`Next: ${selectedTarget.recommendation}`].forEach((line,index) => { const clipped = line.length > 86 ? `${line.slice(0,83)}…` : line; context.fillText(clipped,90,290 + index * 62); }); context.fillStyle="#b8c8d5"; context.font="17px Arial"; context.fillText("Demonstration data · Evidence for further investigation only",70,585); canvas.toBlob(blob => { if (blob) { const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download=`${safeName}-evidence.png`; link.click(); URL.revokeObjectURL(link.href); } },"image/png"); }
+    if (context) { context.fillStyle="#102a43"; context.fillRect(0,0,1200,630); context.fillStyle="#d2ad53"; context.fillRect(0,0,1200,8); context.fillStyle="#ffffff"; context.font="bold 34px Georgia"; context.fillText(translateText("Exploration Evidence Summary", locale),70,88); context.font="bold 46px Georgia"; context.fillText(selectedTarget.name,70,160); context.fillStyle="#cbb8e5"; context.font="22px Arial"; context.fillText(translateText(`${selectedTarget.commodities.join(" · ")}  |  Level ${selectedTarget.evidenceLevel} — ${selectedTarget.evidenceLabel}`, locale),70,205); context.fillStyle="#ffffff"; context.font="20px Arial"; [selectedTarget.geologicalSetting,selectedTarget.surfaceEvidence,selectedTarget.drillEvidence,`Next: ${selectedTarget.recommendation}`].map(line => translateText(line, locale)).forEach((line,index) => { const clipped = line.length > 86 ? `${line.slice(0,83)}…` : line; context.fillText(clipped,90,290 + index * 62); }); context.fillStyle="#b8c8d5"; context.font="17px Arial"; context.fillText(translateText("Demonstration data · Evidence for further investigation only", locale),70,585); canvas.toBlob(blob => { if (blob) { const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download=`${safeName}-evidence.png`; link.click(); URL.revokeObjectURL(link.href); } },"image/png"); }
   };
 
   return (
@@ -963,12 +966,12 @@ function ExplorationV2() {
         <aside className="panel exploration-filter-v2">
           <div className="panel-head"><div><span className="section-kicker purple-text">ANALYSIS CONTROLS</span><h3>Evidence filters</h3></div><button onClick={resetFilters}>Reset all</button></div>
           <div className="exploration-filter-scroll">
-            <label>Region<select value={filters.region} onChange={event => updateFilter("region",event.target.value)}>{["All regions","Boké","Labé","Kindia","Kankan","Nzérékoré"].map(value => <option key={value}>{value}</option>)}</select></label>
-            <label>Evidence type<select value={filters.evidenceType} onChange={event => updateFilter("evidenceType",event.target.value)}>{["All evidence types","Geology","Geochemistry","Geophysics","Remote sensing","Drilling","Resource appraisal"].map(value => <option key={value}>{value}</option>)}</select></label>
-            <label>Data source<select value={filters.source} onChange={event => updateFilter("source",event.target.value)}><option>All source agencies</option>{explorationSources.map(source => <option value={source.id} key={source.id}>{source.agency} — {source.name}</option>)}</select></label>
-            <label>Confidence<select value={filters.confidence} onChange={event => updateFilter("confidence",event.target.value)}>{["Any confidence","Moderate or higher","High only"].map(value => <option key={value}>{value}</option>)}</select></label>
-            <label>Data age<select value={filters.age} onChange={event => updateFilter("age",event.target.value)}>{["Any age","Current — 3 years","Legacy — over 5 years"].map(value => <option key={value}>{value}</option>)}</select></label>
-            <label>Infrastructure access<select value={filters.access} onChange={event => updateFilter("access",event.target.value)}>{["Any access","Good","Moderate","Limited"].map(value => <option key={value}>{value}</option>)}</select></label>
+            <label>Region<select value={filters.region} onChange={event => updateFilter("region",event.target.value)}>{["All regions","Boké","Labé","Kindia","Kankan","Nzérékoré"].map(value => <option value={value} key={value}>{value}</option>)}</select></label>
+            <label>Evidence type<select value={filters.evidenceType} onChange={event => updateFilter("evidenceType",event.target.value)}>{["All evidence types","Geology","Geochemistry","Geophysics","Remote sensing","Drilling","Resource appraisal"].map(value => <option value={value} key={value}>{value}</option>)}</select></label>
+            <label>Data source<select value={filters.source} onChange={event => updateFilter("source",event.target.value)}><option value="All source agencies">All source agencies</option>{explorationSources.map(source => <option value={source.id} key={source.id}>{source.agency} — {source.name}</option>)}</select></label>
+            <label>Confidence<select value={filters.confidence} onChange={event => updateFilter("confidence",event.target.value)}>{["Any confidence","Moderate or higher","High only"].map(value => <option value={value} key={value}>{value}</option>)}</select></label>
+            <label>Data age<select value={filters.age} onChange={event => updateFilter("age",event.target.value)}>{["Any age","Current — 3 years","Legacy — over 5 years"].map(value => <option value={value} key={value}>{value}</option>)}</select></label>
+            <label>Infrastructure access<select value={filters.access} onChange={event => updateFilter("access",event.target.value)}>{["Any access","Good","Moderate","Limited"].map(value => <option value={value} key={value}>{value}</option>)}</select></label>
             <fieldset><legend>Evidence level</legend>{([4,3,2,1] as const).map(level => { const labels = {4:"Appraised or resource stage",3:"Drill supported",2:"Surface supported",1:"Speculative"}; return <label className="exploration-level-check" key={level}><input type="checkbox" checked={selectedLevels.has(level)} onChange={() => toggleLevel(level)} /><i className={`evidence-dot-v2 level-${level}`}/><span><b>Level {level}</b>{labels[level]}</span></label>; })}</fieldset>
           </div>
           <div className="exploration-filter-result"><span>Matching targets</span><b>{filteredTargets.length}</b><small>Filters update the map, summaries and tables immediately.</small></div>
@@ -976,7 +979,7 @@ function ExplorationV2() {
 
         <article className="panel exploration-map-panel-v2">
           <div className="panel-head"><div><span className="section-kicker purple-text">DOMINANT MAP WORKSPACE</span><h3>National multi-layer exploration evidence map</h3></div><span className="exploration-map-status"><i/> {activeLayers.size} layers visible</span></div>
-          <InteractiveExplorationMap targets={filteredTargets} selectedTargetId={selectedTargetId} onSelectTarget={selectTarget} activeLayers={activeLayers} onToggleLayer={toggleLayer} onSelectSource={sourceId => { setSelectedSourceId(sourceId); setActiveTab("metadata"); }} opacity={layerOpacity} onOpacityChange={setLayerOpacity}/>
+          <InteractiveExplorationMap targets={filteredTargets} selectedTargetId={selectedTargetId} onSelectTarget={selectTarget} activeLayers={activeLayers} onToggleLayer={toggleLayer} onSelectSource={sourceId => { setSelectedSourceId(sourceId); setActiveTab("metadata"); }} opacity={layerOpacity} onOpacityChange={setLayerOpacity} locale={locale}/>
         </article>
 
         <aside className="panel exploration-target-panel-v2">
@@ -1063,7 +1066,10 @@ export default function Home() {
   const [collapsed, setCollapsed] = useState(false);
   const [selected, setSelected] = useState("");
   const [query, setQuery] = useState("");
+  const [locale, setLocale] = useState<Locale>("en");
+  useDocumentTranslation(locale);
   const pageTitle = useMemo(() => navigation.find(n => n[0] === page)?.[2], [page]);
+  const activeLocale = localeOptions.find(option => option.code === locale) || localeOptions[0];
   function navigate(key: string) { setPage(key as PageKey); setSelected(""); window.scrollTo({top:0,behavior:"smooth"}); }
   return (
     <div className="app-shell">
@@ -1075,7 +1081,13 @@ export default function Home() {
           <button className="period"><small>Reporting period</small><b>Current year · 2026</b></button>
           <button className="freshness"><i/><span><small>Last updated 28 Jul 2026</small><b>18 of 22 sources current</b></span></button>
           <button className="icon-btn">⌕</button><button className="icon-btn notify">♢<i>3</i></button>
-          <button className="language">EN⌄</button><button className="profile"><span>AM</span><i>⌄</i></button>
+          <details className="language-switcher" data-no-translate>
+            <summary aria-label="Choose language"><b>{activeLocale.short}</b><i>⌄</i></summary>
+            <div role="menu" aria-label="Languages">
+              {localeOptions.map(option => <button key={option.code} role="menuitemradio" aria-checked={locale === option.code} className={locale === option.code ? "active" : ""} onClick={event => { setLocale(option.code); event.currentTarget.closest("details")?.removeAttribute("open"); }}><span>{option.short}</span><b>{option.label}</b><i>{locale === option.code ? "✓" : ""}</i></button>)}
+            </div>
+          </details>
+          <button className="profile"><span>AM</span><i>⌄</i></button>
         </div>
       </header>
       <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -1086,13 +1098,13 @@ export default function Home() {
       <main className={`content ${collapsed ? "wide" : ""}`}>
         <div className="mobile-title">{pageTitle}</div>
         {page==="overview" && <Overview />}
-        {page==="exploration" && <ExplorationV2 />}
+        {page==="exploration" && <ExplorationV2 locale={locale} />}
         {page==="licenses" && <Licenses onOpen={setSelected}/>}
         {!["overview","exploration","licenses"].includes(page) && <GenericModule page={page as Exclude<PageKey,"overview"|"exploration"|"licenses">} onOpen={setSelected}/>}
       </main>
       {selected && <><button className="drawer-backdrop" onClick={()=>setSelected("")} aria-label="Close detail panel"/><DetailDrawer name={selected} onClose={()=>setSelected("")} exploration={page==="exploration"}/></>}
       {query && <div className="search-results">Searching national records for “{query}”</div>}
-      <button className="floating-search" onClick={()=>{const q=prompt("Search licenses, operators, mines, targets or regions"); if(q){setQuery(q); setTimeout(()=>setQuery(""),2200)}}}>⌕</button>
+      <button className="floating-search" onClick={()=>{const q=prompt(translateText("Search licenses, operators, mines, targets or regions", locale)); if(q){setQuery(q); setTimeout(()=>setQuery(""),2200)}}}>⌕</button>
     </div>
   );
 }

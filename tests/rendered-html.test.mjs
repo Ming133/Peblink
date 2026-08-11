@@ -108,3 +108,24 @@ test("implements the expert-aligned interactive Exploration Intelligence workspa
   assert.match(css, /\.exploration-compare-grid/);
   assert.match(css, /@media\(max-width:900px\).*\.exploration-workspace-v2/s);
 });
+
+test("provides English, French and Chinese across the dashboard", async () => {
+  const [page, i18n, css] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/i18n.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /useState<Locale>\("en"\)/);
+  assert.match(page, /useDocumentTranslation\(locale\)/);
+  assert.match(page, /className="language-switcher"/);
+  assert.match(page, /localeOptions\.map/);
+  assert.match(i18n, /code: "en"[\s\S]*code: "fr"[\s\S]*code: "zh"/);
+  assert.match(i18n, /Tableau de bord national du renseignement minier/);
+  assert.match(i18n, /国家矿产信息仪表板/);
+  assert.match(i18n, /Renseignement sur l’exploration des minéraux critiques/);
+  assert.match(i18n, /关键矿产勘探信息/);
+  assert.match(i18n, /MutationObserver/);
+  assert.match(i18n, /attributeFilter: \[\.\.\.translatedAttributes\]/);
+  assert.match(css, /\.language-switcher>div button\.active/);
+});
