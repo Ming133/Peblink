@@ -73,6 +73,8 @@ test("implements the expert-aligned interactive Exploration Intelligence workspa
   assert.match(page, /const explorationLayerGroups/);
   assert.match(page, /selectedCommodities/);
   assert.match(page, /aria-pressed=\{selectedTargetId === target\.id\}/);
+  assert.match(page, /Math\.min\(target\.x \+ 10, 90\)/);
+  assert.match(page, /Math\.min\(target\.y \+ 7 \+ index, 90\)/);
   assert.match(page, /Math\.min\(2, Math\.max\(0\.8/);
   assert.match(page, /localStorage\.setItem\("peblink-exploration-view"/);
   assert.match(page, /window\.print\(\)/);
@@ -86,6 +88,7 @@ test("implements the expert-aligned interactive Exploration Intelligence workspa
   assert.match(css, /\.exploration-workspace-v2/);
   assert.match(css, /\.exploration-layer-drawer/);
   assert.match(css, /\.exploration-target-panel-v2/);
+  assert.match(css, /\.exploration-drill-v2\{z-index:14\}/);
   assert.match(css, /\.exploration-compare-overlay/);
   assert.match(css, /\.exploration-compare-modal/);
   assert.match(css, /\.exploration-compare-grid/);
