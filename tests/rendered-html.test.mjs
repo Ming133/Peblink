@@ -282,3 +282,27 @@ test("keeps collapsed navigation identifiable and lets every map expand", async 
   assert.match(i18n, /\["Expand map", "Agrandir la carte", "放大地图"\]/);
   assert.match(i18n, /\["Exit expanded view", "Quitter la vue agrandie", "退出放大视图"\]/);
 });
+
+test("switches country and reporting year with dismissible topbar menus", async () => {
+  const [page, css, i18n] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/i18n.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /const countryOptions =/);
+  assert.match(page, /flag: "🇬🇳"/);
+  assert.match(page, /flag: "🇨🇮"/);
+  assert.match(page, /Republic of Côte d’Ivoire/);
+  assert.match(page, /const reportingPeriodOptions =/);
+  assert.match(page, /Calendar year · 2025/);
+  assert.match(page, /className="topbar-picker country-picker"/);
+  assert.match(page, /className="topbar-picker period-picker"/);
+  assert.match(page, /document\.querySelectorAll<HTMLDetailsElement>\("\.topbar details\[open\]"\)/);
+  assert.match(page, /if \(!menu\.contains\(target\)\) menu\.removeAttribute\("open"\)/);
+  assert.match(page, /event\.key === "Escape"/);
+  assert.match(page, /closest\("details"\)\?\.removeAttribute\("open"\)/);
+  assert.match(css, /\.topbar-picker\{position:relative/);
+  assert.match(css, /\.topbar-picker-menu\{/);
+  assert.match(i18n, /\["Ivory Coast", "Côte d’Ivoire", "科特迪瓦"\]/);
+});

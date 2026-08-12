@@ -21,6 +21,18 @@ const navigation = [
   ["administration", "⚙", "Administration"],
 ] as const;
 
+const countryOptions = [
+  { id: "guinea", label: "Guinea", republic: "Republic of Guinea", flag: "🇬🇳", crest: "GN" },
+  { id: "ivory-coast", label: "Ivory Coast", republic: "Republic of Côte d’Ivoire", flag: "🇨🇮", crest: "CI" },
+] as const;
+
+const reportingPeriodOptions = [
+  { id: "2026", label: "Current year · 2026" },
+  { id: "2025", label: "Calendar year · 2025" },
+  { id: "2024", label: "Calendar year · 2024" },
+  { id: "2023", label: "Calendar year · 2023" },
+] as const;
+
 const kpis = [
   { label: "Active licenses", value: "146", delta: "+8 this year", icon: "▤", tone: "blue" },
   { label: "Active operators", value: "38", delta: "6 under review", icon: "◎", tone: "teal" },
@@ -1346,18 +1358,51 @@ export default function Home() {
   const [selected, setSelected] = useState("");
   const [query, setQuery] = useState("");
   const [locale, setLocale] = useState<Locale>("en");
+  const [countryId, setCountryId] = useState<(typeof countryOptions)[number]["id"]>("guinea");
+  const [reportingPeriod, setReportingPeriod] = useState<(typeof reportingPeriodOptions)[number]["id"]>("2026");
   useDocumentTranslation(locale);
   const pageTitle = useMemo(() => navigation.find(n => n[0] === page)?.[2], [page]);
   const activeLocale = localeOptions.find(option => option.code === locale) || localeOptions[0];
+  const activeCountry = countryOptions.find(option => option.id === countryId) || countryOptions[0];
+  const activeReportingPeriod = reportingPeriodOptions.find(option => option.id === reportingPeriod) || reportingPeriodOptions[0];
+
+  useEffect(() => {
+    const closeOpenTopbarMenus = (event: PointerEvent) => {
+      const target = event.target as Node;
+      document.querySelectorAll<HTMLDetailsElement>(".topbar details[open]").forEach(menu => {
+        if (!menu.contains(target)) menu.removeAttribute("open");
+      });
+    };
+    const closeTopbarMenusOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") document.querySelectorAll<HTMLDetailsElement>(".topbar details[open]").forEach(menu => menu.removeAttribute("open"));
+    };
+    document.addEventListener("pointerdown", closeOpenTopbarMenus);
+    document.addEventListener("keydown", closeTopbarMenusOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOpenTopbarMenus);
+      document.removeEventListener("keydown", closeTopbarMenusOnEscape);
+    };
+  }, []);
+
   function navigate(key: string) { setPage(key as PageKey); setSelected(""); window.scrollTo({top:0,behavior:"smooth"}); }
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div className="brand"><div className="crest"><span>★</span><i/><b>GN</b></div><div><strong>National Mineral Intelligence Dashboard</strong><small>Republic of Guinea</small></div></div>
+        <div className="brand"><div className="crest"><span>★</span><i/><b>{activeCountry.crest}</b></div><div><strong>National Mineral Intelligence Dashboard</strong><small>{activeCountry.republic}</small></div></div>
         <div className="prototype">Prototype · Demonstration Data Only</div>
         <div className="top-actions">
-          <button className="country"><span className="flag">🇬🇳</span><span><small>Country</small><b>Guinea</b></span><i>⌄</i></button>
-          <button className="period"><small>Reporting period</small><b>Current year · 2026</b></button>
+          <details className="topbar-picker country-picker">
+            <summary aria-label="Choose country"><span className="flag">{activeCountry.flag}</span><span><small>Country</small><b>{activeCountry.label}</b></span><i>⌄</i></summary>
+            <div className="topbar-picker-menu country-picker-menu" role="menu" aria-label="Countries">
+              {countryOptions.map(option => <button key={option.id} role="menuitemradio" aria-checked={countryId === option.id} className={countryId === option.id ? "active" : ""} onClick={event => { setCountryId(option.id); event.currentTarget.closest("details")?.removeAttribute("open"); }}><span className="flag">{option.flag}</span><b>{option.label}</b><i>{countryId === option.id ? "✓" : ""}</i></button>)}
+            </div>
+          </details>
+          <details className="topbar-picker period-picker">
+            <summary aria-label="Choose reporting period"><span><small>Reporting period</small><b>{activeReportingPeriod.label}</b></span><i>⌄</i></summary>
+            <div className="topbar-picker-menu period-picker-menu" role="menu" aria-label="Reporting periods">
+              {reportingPeriodOptions.map(option => <button key={option.id} role="menuitemradio" aria-checked={reportingPeriod === option.id} className={reportingPeriod === option.id ? "active" : ""} onClick={event => { setReportingPeriod(option.id); event.currentTarget.closest("details")?.removeAttribute("open"); }}><span>{option.id}</span><b>{option.label}</b><i>{reportingPeriod === option.id ? "✓" : ""}</i></button>)}
+            </div>
+          </details>
           <button className="freshness"><i/><span><small>Last updated 28 Jul 2026</small><b>18 of 22 sources current</b></span></button>
           <button className="icon-btn">⌕</button><button className="icon-btn notify">♢<i>3</i></button>
           <details className="language-switcher" data-no-translate>
