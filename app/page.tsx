@@ -376,6 +376,38 @@ function AppIcon({ children }: { children: React.ReactNode }) {
   return <span className="app-icon" aria-hidden>{children}</span>;
 }
 
+function useMapExpansion() {
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExpanded(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [expanded]);
+
+  return { expanded, toggleExpanded: () => setExpanded(current => !current) };
+}
+
+function MapExpandButton({ expanded, onToggle, className = "" }: { expanded: boolean; onToggle: () => void; className?: string }) {
+  const label = expanded ? "Exit expanded view" : "Expand map";
+  return <button
+    type="button"
+    className={`map-expand-toggle ${className}`.trim()}
+    aria-label={label}
+    aria-pressed={expanded}
+    title={label}
+    onClick={event => { event.stopPropagation(); onToggle(); }}
+  ><span aria-hidden>{expanded ? "↙" : "⛶"}</span>{label}</button>;
+}
+
 function Sparkline({ tone = "blue" }: { tone?: string }) {
   return (
     <div className={`sparkline ${tone}`}>
@@ -385,11 +417,13 @@ function Sparkline({ tone = "blue" }: { tone?: string }) {
 }
 
 function MapVisual({ exploration = false, onSelect }: { exploration?: boolean; onSelect: (name: string) => void }) {
+  const { expanded, toggleExpanded } = useMapExpansion();
   const points = exploration
     ? [["target t1", "Fouta Central"], ["target t2", "Kankan East"], ["target t3", "Forest Belt CM-07"], ["target t4", "Beyla Ridge"]]
     : [["mine m1", "North Ridge Bauxite"], ["mine m2", "Forest Belt Gold"], ["mine m3", "Simandou North"], ["alert-point m4", "GUI-MIN-014"]];
   return (
-    <div className={`map-visual ${exploration ? "exploration-map" : ""}`}>
+    <div className={`map-visual map-expand-surface ${exploration ? "exploration-map" : ""} ${expanded ? "map-expanded" : ""}`}>
+      <MapExpandButton expanded={expanded} onToggle={toggleExpanded} className="map-visual-expand-toggle" />
       <div className="map-tools">
         <button>＋</button><button>−</button><button title="Reset map">⌂</button>
       </div>
@@ -468,6 +502,7 @@ function DetailDrawer({ name, onClose, kind = "record" }: { name: string; onClos
 }
 
 function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: boolean }) {
+  const { expanded, toggleExpanded } = useMapExpansion();
   const [zoom, setZoom] = useState(1);
   const [layers, setLayers] = useState<Record<EnvironmentLayer, boolean>>({
     mines: true,
@@ -560,7 +595,7 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
   };
 
   return (
-    <div className={`overview-risk-map ${environmentalMode ? "environmental-detail-map" : ""}`}>
+    <div className={`overview-risk-map map-expand-surface ${environmentalMode ? "environmental-detail-map" : ""} ${expanded ? "map-expanded" : ""}`}>
       <div className="overview-map-control-shell">
         <div className="overview-layer-controls" aria-label="Map layer filters">
           <div className="layer-filter-title"><b>FILTER MAP</b><span>{activeLayerCount} of {layerOptions.length} layers visible</span></div>
@@ -598,6 +633,7 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
           <button onClick={() => setZoom(1)} aria-label="Reset zoom">⌂</button>
           <span>{Math.round(zoom * 100)}%</span>
         </div>
+        <MapExpandButton expanded={expanded} onToggle={toggleExpanded} className="overview-map-expand-toggle" />
         <div className="overview-demo-badge"><i /> DEMONSTRATION MAP</div>
 
         <div className="overview-map-canvas" style={{ transform: `scale(${zoom})` }}>
@@ -917,6 +953,7 @@ function InteractiveExplorationMap({
   onOpacityChange: (opacity: number) => void;
   locale: Locale;
 }) {
+  const { expanded, toggleExpanded } = useMapExpansion();
   const [zoom, setZoom] = useState(1);
   const [showLayers, setShowLayers] = useState(false);
   const [hovered, setHovered] = useState<ExplorationReadout | null>(null);
@@ -987,7 +1024,7 @@ function InteractiveExplorationMap({
   };
 
   return (
-    <div className="exploration-map-workspace">
+    <div className={`exploration-map-workspace map-expand-surface ${expanded ? "map-expanded" : ""}`}>
       <div className="exploration-map-toolbar">
         <button className={`exploration-layer-button ${showLayers ? "active" : ""}`} onClick={() => setShowLayers(value => !value)} aria-expanded={showLayers}><span>☷</span> Evidence layers <b>{activeCount}</b></button>
         <label className="exploration-opacity-control"><span>Layer opacity</span><input type="range" min="25" max="100" value={Math.round(opacity * 100)} onChange={event => onOpacityChange(Number(event.target.value) / 100)} /><b>{Math.round(opacity * 100)}%</b></label>
@@ -1002,6 +1039,7 @@ function InteractiveExplorationMap({
           <button onClick={() => setZoom(1)} aria-label="Reset exploration map zoom">⌂</button>
           <span>{Math.round(zoom * 100)}%</span>
         </div>
+        <MapExpandButton expanded={expanded} onToggle={toggleExpanded} className="exploration-map-expand-toggle" />
         <div className="exploration-demo-badge"><i /> DEMONSTRATION GEOLOGY</div>
 
         <div className={`exploration-layer-drawer ${showLayers ? "open" : ""}`}>
@@ -1331,7 +1369,7 @@ export default function Home() {
       </header>
       <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
         <div className="side-label">{collapsed ? "" : "INTELLIGENCE MODULES"}</div>
-        <nav>{navigation.map(([key,icon,label])=><button key={key} className={page===key ? "active":""} onClick={()=>navigate(key)} title={label}><AppIcon>{icon}</AppIcon><span>{label}</span>{key==="alerts"&&<b className="nav-count">12</b>}</button>)}</nav>
+        <nav>{navigation.map(([key,icon,label])=><button key={key} className={page===key ? "active":""} onClick={()=>navigate(key)} title={label}><AppIcon>{icon}</AppIcon><span className="nav-label">{label}</span>{key==="alerts"&&<b className="nav-count">12</b>}</button>)}</nav>
         <div className="side-footer"><div className="coverage"><span>National data coverage<b>86%</b></span><i><em/></i><small>4 sources delayed</small></div><button onClick={()=>setCollapsed(!collapsed)}>{collapsed ? "›" : "‹ Collapse navigation"}</button></div>
       </aside>
       <main className={`content ${collapsed ? "wide" : ""}`}>

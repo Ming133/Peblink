@@ -59,6 +59,8 @@ const entries: TranslationEntry[] = [
   ["Export summary", "Exporter le résumé", "导出摘要"],
   ["Export evidence summary", "Exporter le résumé des preuves", "导出证据摘要"],
   ["Export map", "Exporter la carte", "导出地图"],
+  ["Expand map", "Agrandir la carte", "放大地图"],
+  ["Exit expanded view", "Quitter la vue agrandie", "退出放大视图"],
   ["Save view", "Enregistrer la vue", "保存视图"],
   ["Compare", "Comparer", "比较"],
   ["Details", "Détails", "详情"],

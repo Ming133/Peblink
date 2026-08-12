@@ -239,3 +239,25 @@ test("lets content cards grow without clipping translated or zoomed text", async
   assert.match(resilienceRules, /\.environmental-obligations-card>div:last-child>span\{min-height:42px/);
   assert.match(resilienceRules, /@media\(max-width:800px\)\{\.environmental-workflow-card\{min-height:500px\}/);
 });
+
+test("keeps collapsed navigation identifiable and lets every map expand", async () => {
+  const [page, css, i18n] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/i18n.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /className="nav-label"/);
+  assert.match(css, /\.sidebar\.collapsed nav button \.nav-label\{display:none\}/);
+  assert.match(css, /\.sidebar\.collapsed nav button\.active\{background:transparent/);
+  assert.match(page, /function useMapExpansion/);
+  assert.match(page, /event\.key === "Escape"/);
+  assert.match(page, /function MapExpandButton/);
+  assert.equal((page.match(/<MapExpandButton/g) || []).length, 3);
+  assert.match(page, /map-visual map-expand-surface/);
+  assert.match(page, /overview-risk-map map-expand-surface/);
+  assert.match(page, /exploration-map-workspace map-expand-surface/);
+  assert.match(css, /\.map-expand-surface\.map-expanded\{position:fixed!important/);
+  assert.match(i18n, /\["Expand map", "Agrandir la carte", "放大地图"\]/);
+  assert.match(i18n, /\["Exit expanded view", "Quitter la vue agrandie", "退出放大视图"\]/);
+});
