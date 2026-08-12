@@ -571,10 +571,13 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
 
   const renderAdvancedFeature = (layer: Exclude<EnvironmentLayer, OverviewLayer>, feature: OverviewMapFeature) => {
     const rotated = feature.angle || 0;
+    const usesRangeHotspot = layer === "rainfall" || layer === "boundaries" || layer === "watersheds";
     const transform = layer === "flow" ? `rotate(${rotated}deg)` : feature.angle ? `translate(-50%, -50%) rotate(${rotated}deg)` : undefined;
+    const markerSymbol = feature.symbol || (layer === "boundaries" ? "▣" : layer === "watersheds" ? "≈" : "");
+    const tooltipTransform = rotated ? usesRangeHotspot ? `translateY(-100%) rotate(${-rotated}deg)` : `translate(-50%, -100%) rotate(${-rotated}deg)` : undefined;
     return <button
       key={feature.id}
-      className={`environment-map-feature environment-${layer}-feature ${feature.variant || ""} ${isSelected(feature) ? "map-feature-selected" : ""} ${isDismissed(feature) ? "map-feature-dismissed" : ""}`}
+      className={`environment-map-feature environment-${layer}-feature ${usesRangeHotspot ? "environment-range-feature" : ""} ${feature.variant || ""} ${isSelected(feature) ? "map-feature-selected" : ""} ${isDismissed(feature) ? "map-feature-dismissed" : ""}`}
       data-map-feature="true"
       style={{ left: `${feature.x}%`, top: `${feature.y}%`, width: feature.width ? `${feature.width}%` : undefined, height: feature.height ? `${feature.height}%` : undefined, transform }}
       onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
@@ -583,8 +586,8 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
       aria-pressed={isSelected(feature)}
       aria-label={`${feature.name}, ${feature.type}, ${feature.coordinates}`}
     >
-      <i>{feature.symbol}</i>
-      <span className="overview-feature-tooltip" style={rotated ? { transform: `translate(-50%, -100%) rotate(${-rotated}deg)` } : undefined}>
+      <i style={usesRangeHotspot && rotated ? { transform: `rotate(${-rotated}deg)` } : undefined}>{markerSymbol}</i>
+      <span className="overview-feature-tooltip" style={tooltipTransform ? { transform: tooltipTransform } : undefined}>
         <b>{feature.name}</b><small>{feature.type}</small>
         {feature.status && <small><strong>Status</strong> · {feature.status}</small>}
         {(feature.risk || feature.confidence) && <small className="environment-tooltip-metrics"><strong>Risk</strong> {feature.risk} · <strong>Confidence</strong> {feature.confidence}</small>}
@@ -678,6 +681,7 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
               aria-label={`${feature.name}, ${feature.coordinates}`}
             >
               <i />
+              <b className="overview-range-hotspot" aria-hidden>F</b>
               <span className="overview-feature-tooltip"><b>{feature.name}</b><small>{feature.type}</small><em>{feature.coordinates}</em></span>
             </button>
           ))}

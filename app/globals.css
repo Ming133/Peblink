@@ -102,3 +102,8 @@
 
 /* Risk and potential-pollution zones remain visible without pulsing. */
 .overview-pollution-feature>i{animation:none;opacity:.68;transform:none}
+
+/* Area overlays use small hotspots so the features inside remain selectable. */
+.environment-range-feature{pointer-events:none}.environment-range-feature>i{pointer-events:auto}.environment-range-feature>.overview-feature-tooltip{left:auto;right:-82px;top:5px;transform:translateY(-100%);transform-origin:calc(100% - 88px) 100%}.environment-range-feature>.overview-feature-tooltip:after{left:auto;right:88px;transform:rotate(45deg)}
+.environment-boundaries-feature:after{content:none}.environment-boundaries-feature>i,.environment-watersheds-feature>i{position:absolute;right:7px;top:7px;display:grid;width:27px;height:27px;place-items:center;border:2px solid #fff;border-radius:5px;background:#755493;color:#fff;box-shadow:0 2px 7px #17384f66;font-size:12px;font-style:normal}.environment-watersheds-feature>i{border-radius:50%;background:#39778e}.environment-boundaries-feature>i:hover,.environment-boundaries-feature:focus-visible>i{background:#573572;box-shadow:0 0 0 5px #7554932c,0 2px 7px #17384f66}
+.overview-farm-feature{pointer-events:none}.overview-farm-feature>i{pointer-events:none}.overview-range-hotspot{position:absolute;right:-7px;top:-7px;z-index:4;display:grid;width:23px;height:23px;place-items:center;pointer-events:auto;border:2px solid #fff;border-radius:5px;background:#4f873f;color:#fff;box-shadow:0 2px 7px #17384f55;font-size:9px;transform:rotate(8deg)}.overview-range-hotspot:hover,.overview-farm-feature:focus-visible>.overview-range-hotspot{background:#346d2b;box-shadow:0 0 0 5px #4f873f2b,0 2px 7px #17384f55}

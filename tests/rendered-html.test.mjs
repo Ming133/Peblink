@@ -223,6 +223,15 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.match(css, /\.environment-rainfall-feature>i\{[^}]*pointer-events:auto/);
   assert.match(css, /\.environment-rainfall-feature>\.overview-feature-tooltip\{[^}]*transform:translateY\(-100%\)/);
   assert.match(css, /\.overview-pollution-feature>i\{animation:none;opacity:\.68;transform:none\}/);
+  assert.match(page, /usesRangeHotspot = layer === "rainfall" \|\| layer === "boundaries" \|\| layer === "watersheds"/);
+  assert.match(page, /environment-range-feature/);
+  assert.match(page, /className="overview-range-hotspot"/);
+  assert.match(css, /\.environment-range-feature\{pointer-events:none\}/);
+  assert.match(css, /\.environment-range-feature>i\{pointer-events:auto\}/);
+  assert.match(css, /\.environment-boundaries-feature:after\{content:none\}/);
+  assert.match(css, /\.overview-farm-feature\{pointer-events:none\}/);
+  assert.match(css, /\.overview-range-hotspot\{[^}]*pointer-events:auto/);
+  assert.doesNotMatch(css, /\.overview-pollution-feature\{[^}]*pointer-events:none/);
   assert.match(css, /\.map-feature-selected>\.overview-feature-tooltip/);
   assert.match(css, /\.map-feature-dismissed:hover>\.overview-feature-tooltip[^{]*\{opacity:0!important;visibility:hidden!important\}/);
   assert.match(css, /:has\(\.map-feature-selected\) \.overview-map-canvas\{z-index:30\}/);
