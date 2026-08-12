@@ -1198,8 +1198,18 @@ export function translateText(value: string, locale: Locale) {
   return `${leading}${translated}${trailing}`;
 }
 
-const textOriginals = new WeakMap<Text, string>();
-const attributeOriginals = new WeakMap<Element, Map<string, string>>();
+export type TranslationMemory = { original: string; lastApplied: string };
+
+export function advanceTranslation(memory: TranslationMemory | undefined, current: string, locale: Locale) {
+  const nextMemory = memory || { original: current, lastApplied: current };
+  if (current !== nextMemory.original && current !== nextMemory.lastApplied) nextMemory.original = current;
+  const value = translateText(nextMemory.original, locale);
+  nextMemory.lastApplied = value;
+  return { memory: nextMemory, value };
+}
+
+const textTranslations = new WeakMap<Text, TranslationMemory>();
+const attributeTranslations = new WeakMap<Element, Map<string, TranslationMemory>>();
 const translatedAttributes = ["aria-label", "placeholder", "title"] as const;
 
 function isExcluded(node: Node) {
@@ -1209,33 +1219,24 @@ function isExcluded(node: Node) {
 
 function applyTextNode(node: Text, locale: Locale) {
   if (isExcluded(node) || !node.data.trim()) return;
-  const knownOriginal = textOriginals.get(node);
-  const expected = knownOriginal === undefined ? undefined : translateText(knownOriginal, locale);
-  if (knownOriginal !== undefined && node.data !== knownOriginal && node.data !== expected) {
-    textOriginals.set(node, node.data);
-  } else if (knownOriginal === undefined) {
-    textOriginals.set(node, node.data);
-  }
-  const original = textOriginals.get(node)!;
-  const nextValue = translateText(original, locale);
-  if (node.data !== nextValue) node.data = nextValue;
+  const result = advanceTranslation(textTranslations.get(node), node.data, locale);
+  textTranslations.set(node, result.memory);
+  if (node.data !== result.value) node.data = result.value;
 }
 
 function applyElementAttributes(element: Element, locale: Locale) {
   if (isExcluded(element)) return;
-  let originals = attributeOriginals.get(element);
-  if (!originals) {
-    originals = new Map();
-    attributeOriginals.set(element, originals);
+  let translations = attributeTranslations.get(element);
+  if (!translations) {
+    translations = new Map();
+    attributeTranslations.set(element, translations);
   }
   translatedAttributes.forEach(attribute => {
     const current = element.getAttribute(attribute);
     if (current === null) return;
-    const knownOriginal = originals!.get(attribute);
-    const expected = knownOriginal === undefined ? undefined : translateText(knownOriginal, locale);
-    if (knownOriginal === undefined || (current !== knownOriginal && current !== expected)) originals!.set(attribute, current);
-    const nextValue = translateText(originals!.get(attribute)!, locale);
-    if (current !== nextValue) element.setAttribute(attribute, nextValue);
+    const result = advanceTranslation(translations!.get(attribute), current, locale);
+    translations!.set(attribute, result.memory);
+    if (current !== result.value) element.setAttribute(attribute, result.value);
   });
 }
 

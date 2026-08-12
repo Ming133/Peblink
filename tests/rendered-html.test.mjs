@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+
+const require = createRequire(import.meta.url);
 
 async function render() {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -128,4 +131,30 @@ test("provides English, French and Chinese across the dashboard", async () => {
   assert.match(i18n, /MutationObserver/);
   assert.match(i18n, /attributeFilter: \[\.\.\.translatedAttributes\]/);
   assert.match(css, /\.language-switcher>div button\.active/);
+});
+
+test("keeps the English source while switching through multiple languages", async () => {
+  const source = await readFile(new URL("../app/i18n.ts", import.meta.url), "utf8");
+  const ts = require("typescript");
+  const compiled = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText;
+  const localModule = { exports: {} };
+  new Function("require", "module", "exports", compiled)(require, localModule, localModule.exports);
+  const { advanceTranslation } = localModule.exports;
+
+  let memory;
+  let current = "National Overview";
+  ({ memory, value: current } = advanceTranslation(memory, current, "en"));
+  assert.equal(current, "National Overview");
+  ({ memory, value: current } = advanceTranslation(memory, current, "fr"));
+  assert.equal(current, "Vue d’ensemble nationale");
+  ({ memory, value: current } = advanceTranslation(memory, current, "zh"));
+  assert.equal(current, "全国概览");
+  ({ memory, value: current } = advanceTranslation(memory, current, "en"));
+  assert.equal(current, "National Overview");
+
+  current = "Evidence layers";
+  ({ memory, value: current } = advanceTranslation(memory, current, "zh"));
+  assert.equal(current, "证据图层");
 });
