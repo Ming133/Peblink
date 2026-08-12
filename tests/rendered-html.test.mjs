@@ -222,6 +222,7 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.match(css, /\.environment-rainfall-feature\{pointer-events:none;animation:none;opacity:1\}/);
   assert.match(css, /\.environment-rainfall-feature>i\{[^}]*pointer-events:auto/);
   assert.match(css, /\.environment-rainfall-feature>\.overview-feature-tooltip\{[^}]*transform:translateY\(-100%\)/);
+  assert.match(css, /\.overview-pollution-feature>i\{animation:none;opacity:\.68;transform:none\}/);
   assert.match(css, /\.map-feature-selected>\.overview-feature-tooltip/);
   assert.match(css, /\.map-feature-dismissed:hover>\.overview-feature-tooltip[^{]*\{opacity:0!important;visibility:hidden!important\}/);
   assert.match(css, /:has\(\.map-feature-selected\) \.overview-map-canvas\{z-index:30\}/);

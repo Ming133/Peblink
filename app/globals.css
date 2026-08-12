@@ -99,3 +99,6 @@
 
 /* Rainfall overlays stay still and never block the map features underneath. */
 .environment-rainfall-feature{pointer-events:none;animation:none;opacity:1}.environment-rainfall-feature>i{position:absolute;right:10px;top:10px;display:grid;width:27px;height:27px;place-items:center;pointer-events:auto;border:2px solid #fff;border-radius:50%;background:#2d79a7;color:#fff;box-shadow:0 2px 7px #17384f66;font-size:12px;font-style:normal}.environment-rainfall-feature>i:hover,.environment-rainfall-feature:focus-visible>i{background:#155f8c;box-shadow:0 0 0 5px #2d79a72c,0 2px 7px #17384f66}.environment-rainfall-feature>.overview-feature-tooltip{left:auto;right:-82px;top:5px;transform:translateY(-100%)}.environment-rainfall-feature>.overview-feature-tooltip:after{left:auto;right:88px;transform:rotate(45deg)}
+
+/* Risk and potential-pollution zones remain visible without pulsing. */
+.overview-pollution-feature>i{animation:none;opacity:.68;transform:none}
