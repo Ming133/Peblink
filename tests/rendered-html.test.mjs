@@ -158,3 +158,25 @@ test("keeps the English source while switching through multiple languages", asyn
   ({ memory, value: current } = advanceTranslation(memory, current, "zh"));
   assert.equal(current, "证据图层");
 });
+
+test("completes the Environmental & Social monitoring workspace", async () => {
+  const [page, css] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /function EnvironmentModule/);
+  assert.match(page, /page==="environment" && <EnvironmentModule/);
+  assert.match(page, /NATIONAL ENVIRONMENTAL MONITORING/);
+  assert.match(page, /Mining, water, farmland & pollution exposure map/);
+  assert.match(page, /<OverviewRiskMap \/>/);
+  assert.match(page, /Environmental alerts requiring action/);
+  assert.match(page, /From alert to verified conclusion/);
+  assert.match(page, /Permits, inspections and monitoring records/);
+  assert.match(page, /kind=\{page==="exploration" \? "exploration" : page==="environment" \? "environment" : "record"\}/);
+  assert.match(css, /Environmental & Social — Environment 1 dedicated monitoring workspace/);
+  assert.match(css, /\.environmental-command-grid/);
+  assert.match(css, /\.environmental-action-panel/);
+  assert.match(css, /\.environmental-workflow-card/);
+  assert.match(css, /@media\(max-width:800px\).*\.environmental-workflow-card/s);
+});

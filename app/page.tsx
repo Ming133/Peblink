@@ -334,16 +334,18 @@ function MapVisual({ exploration = false, onSelect }: { exploration?: boolean; o
   );
 }
 
-function DetailDrawer({ name, onClose, exploration = false }: { name: string; onClose: () => void; exploration?: boolean }) {
+function DetailDrawer({ name, onClose, kind = "record" }: { name: string; onClose: () => void; kind?: "record" | "exploration" | "environment" }) {
+  const exploration = kind === "exploration";
+  const environment = kind === "environment";
   return (
     <aside className="detail-drawer">
       <div className="drawer-head">
-        <span className={`eyebrow ${exploration ? "purple-text" : ""}`}>{exploration ? "EXPLORATION TARGET" : "SELECTED RECORD"}</span>
+        <span className={`eyebrow ${exploration ? "purple-text" : environment ? "green" : ""}`}>{exploration ? "EXPLORATION TARGET" : environment ? "ENVIRONMENTAL MONITORING RECORD" : "SELECTED RECORD"}</span>
         <button onClick={onClose} aria-label="Close details">×</button>
       </div>
       <h2>{name}</h2>
-      <p className="muted">{exploration ? "Target CM-07 · Nzérékoré Region" : "GUI-MIN-014 · Boké Region"}</p>
-      <div className="drawer-status"><span className={exploration ? "purple-chip" : "green-chip"}>{exploration ? "Level 2 — Surface supported" : "Active"}</span><span>Confidence: {exploration ? "Moderate" : "High"}</span></div>
+      <p className="muted">{exploration ? "Target CM-07 · Nzérékoré Region" : environment ? "ENV-DEMO-01 · National monitoring workflow" : "GUI-MIN-014 · Boké Region"}</p>
+      <div className="drawer-status"><span className={exploration ? "purple-chip" : "green-chip"}>{exploration ? "Level 2 — Surface supported" : environment ? "Field verification required" : "Active"}</span><span>Confidence: {exploration ? "Moderate" : environment ? "Preliminary" : "High"}</span></div>
       {exploration ? (
         <>
           <div className="record-grid exploration-record">
@@ -360,6 +362,19 @@ function DetailDrawer({ name, onClose, exploration = false }: { name: string; on
           <section><h4>Limitations & missing evidence</h4><p>No modern drilling data. Geochemical coverage is incomplete and was last collected in 2019. Analytical metadata are unavailable for 11% of samples.</p></section>
           <section><h4>Recommended next investigation</h4><p><b>Targeted geophysical survey</b>, followed by field verification, surface sampling, and data verification before any drill decision.</p></section>
         </>
+      ) : environment ? (
+        <>
+          <div className="record-grid">
+            <span>Record type<b>Environmental monitoring</b></span><span>Status<b>Under review</b></span>
+            <span>Coordinates<b>10.84° N, 14.11° W</b></span><span>Priority<b>High</b></span>
+            <span>Latest update<b>28 July 2026</b></span><span>Responsible agency<b>Environmental Assessment Authority</b></span>
+          </div>
+          <section><h4>Potential impact</h4><p>This demonstration record identifies a possible pathway between mining activity, surface water, and nearby farmland.</p></section>
+          <section><h4>Evidence currently available</h4><ul><li>Map-based proximity screening</li><li>Illustrative water and sediment observations</li><li>Environmental permit and inspection records</li></ul></section>
+          <section><h4>Affected features</h4><p>Potentially affected rivers, agricultural areas, communities, and downstream monitoring points are shown on the environmental map.</p></section>
+          <section><h4>Required action</h4><p><b>Complete field sampling and agency review</b> before changing the alert status or reaching an environmental conclusion.</p></section>
+          <section><h4>Limitations</h4><p>This is demonstration data. It is not a real contamination finding and must not be used as evidence of environmental harm.</p></section>
+        </>
       ) : (
         <div className="record-grid">
           <span>Operator<b>Alpha Mining Guinea</b></span><span>Commodity<b>Bauxite</b></span>
@@ -367,7 +382,7 @@ function DetailDrawer({ name, onClose, exploration = false }: { name: string; on
           <span>Latest production<b>4.8 Mt</b></span><span>Compliance score<b>88 / 100</b></span>
         </div>
       )}
-      <button className="primary full">{exploration ? "Export evidence summary" : "View full record"} <span>→</span></button>
+      <button className="primary full">{exploration ? "Export evidence summary" : environment ? "Open monitoring record" : "View full record"} <span>→</span></button>
       <p className="drawer-foot">Prototype — demonstration data only</p>
     </aside>
   );
@@ -573,6 +588,54 @@ function Overview() {
       </section>
     </>
   );
+}
+
+const environmentalMonitoringMetrics = [
+  { label: "Water sampling coverage", value: "72%", detail: "14 of 19 monitoring sites current", tone: "blue" },
+  { label: "Rehabilitation inspections", value: "68%", detail: "11 inspections overdue", tone: "amber" },
+  { label: "Community commitments", value: "81%", detail: "19 obligations overdue", tone: "purple" },
+  { label: "Environmental permit coverage", value: "82%", detail: "7 expire within 90 days", tone: "green" },
+];
+
+function EnvironmentModule({ onOpen }: { onOpen: (name: string) => void }) {
+  const spec = moduleSpecs.environment;
+  return <>
+    <header className="page-heading environmental-heading"><div><div className="breadcrumb green">ENVIRONMENTAL & SOCIAL <span>/</span> NATIONAL MONITORING</div><h1>{spec.title}</h1><p>{spec.subtitle}</p></div><div className="heading-actions"><button className="select-btn">Current year⌄</button><button className="select-btn">All regions⌄</button><button className="primary">⇩ Export view</button></div></header>
+
+    <div className="module-kpis environmental-kpis">{spec.kpis.map((item,index) => <article className="panel" key={item[0]}><span>{item[0]}</span><b>{item[1]}</b><small className={index === 1 || index === 2 || index === 3 || index === 4 ? "amber" : "green"}>{item[2]}</small></article>)}</div>
+
+    <div className="environmental-demo-notice"><b>i</b><span><strong>Demonstration environmental workspace</strong> Potential pollution zones and alerts are illustrative screening scenarios. They require field sampling and agency review before any conclusion.</span></div>
+
+    <section className="environmental-command-grid">
+      <article className="panel environmental-map-panel">
+        <div className="panel-head"><div><span className="section-kicker green">NATIONAL ENVIRONMENTAL MONITORING</span><h3>Mining, water, farmland & pollution exposure map</h3></div><div className="panel-actions"><button>Live layers <b>5</b></button><button aria-label="Open map options">•••</button></div></div>
+        <OverviewRiskMap />
+      </article>
+
+      <aside className="environmental-command-side">
+        <article className="panel environmental-action-panel">
+          <div className="panel-head"><div><span className="section-kicker red">PRIORITY REVIEW QUEUE</span><h3>Environmental alerts requiring action</h3></div><span className="status expiring">3 active</span></div>
+          <div className="environmental-alert-rollup"><span><b>1</b> critical</span><span><b>2</b> sampling actions</span><span><b>3</b> affected corridors</span></div>
+          {overviewEnvironmentalAlerts.map((alert,index) => <button className="environmental-action-item" key={alert.id} onClick={() => onOpen(alert.title)}><i className={alert.color}>{alert.level === "Critical" ? "!" : "△"}</i><span><b>{alert.title}</b><small>{alert.affected}</small><em>{alert.coordinates}</em></span><time>{index === 0 ? "Immediate" : index === 1 ? "Within 48 h" : "Within 7 d"}</time></button>)}
+          <button className="environmental-review-all">Open full alert register →</button>
+        </article>
+
+        <article className="panel environmental-monitoring-panel">
+          <div className="panel-head"><div><span className="section-kicker green">MONITORING COMPLETENESS</span><h3>Coverage requiring attention</h3></div><b className="score">76</b></div>
+          <div className="environmental-monitoring-list">{environmentalMonitoringMetrics.map(metric => <div key={metric.label}><span><b>{metric.label}</b><strong>{metric.value}</strong></span><i><em className={metric.tone} style={{width:metric.value}}/></i><small>{metric.detail}</small></div>)}</div>
+        </article>
+      </aside>
+    </section>
+
+    <section className="environmental-workflow-grid">
+      <article className="panel environmental-workflow-card"><div className="panel-head"><div><span className="section-kicker blue">FIELD VERIFICATION WORKFLOW</span><h3>From alert to verified conclusion</h3></div></div><div>{[["1","Screen","Map proximity and source records"],["2","Sample","Water, sediment, soil and control sites"],["3","Validate","Laboratory QA/QC and coordinate checks"],["4","Review","Environmental agency and technical review"],["5","Decide","Close, monitor, mitigate or escalate"]].map((step,index) => <span key={step[0]}><i>{step[0]}</i><b>{step[1]}</b><small>{step[2]}</small>{index < 4 && <em>→</em>}</span>)}</div></article>
+      <article className="panel environmental-obligations-card"><div className="panel-head"><div><span className="section-kicker amber">OBLIGATION STATUS</span><h3>Permits, inspections & commitments</h3></div></div><div>{[["Environmental permits","39 valid · 7 expiring","82%"],["Inspection programme","28 completed · 11 overdue","72%"],["Rehabilitation plans","31 approved · 8 in review","79%"],["Community commitments","76 current · 19 overdue","80%"]].map(item => <span key={item[0]}><b>{item[0]}</b><small>{item[1]}</small><i><em style={{width:item[2]}}/></i><strong>{item[2]}</strong></span>)}</div></article>
+    </section>
+
+    <div className="module-notice environmental-source-notice"><b>i</b><span>{spec.notice}</span></div>
+
+    <article className="panel table-panel module-table environmental-register"><div className="panel-head"><div><span className="section-kicker green">ENVIRONMENTAL & SOCIAL REGISTER</span><h3>Permits, inspections and monitoring records</h3></div><div className="table-tools"><input placeholder="⌕ Search project, permit or operator"/><button>☷ Filters <b>3</b></button></div></div><div className="table-scroll"><table><thead><tr>{spec.columns.map(column => <th key={column}>{column}</th>)}</tr></thead><tbody>{spec.rows.map((row,index) => <tr key={index} onClick={() => onOpen(row[0])}>{row.map((cell,cellIndex) => <td key={cellIndex}>{cellIndex === 0 ? <b>{cell}</b> : cell}</td>)}</tr>)}</tbody></table></div><p className="table-note">Environmental records combine permit, inspection, water-monitoring, rehabilitation and incident information. Source limitations remain visible in every review.</p></article>
+  </>;
 }
 
 type ExplorationReadout = {
@@ -1031,7 +1094,7 @@ function RelationshipNetwork({ kind }: { kind: PageKey }) {
 
 function MetricVisual({ page }: { page: PageKey }) {
   if (page === "ownership" || page === "infrastructure" || page === "revenue") return <RelationshipNetwork kind={page}/>;
-  if (page === "export" || page === "environment") return <MapVisual onSelect={()=>{}}/>;
+  if (page === "export") return <MapVisual onSelect={()=>{}}/>;
   if (page === "quality") return <div className="workflow">{["Data submitted","File & format check","Required fields","Unit & date standardization","Coordinate validation","Duplicate detection","Entity matching","Cross-source comparison","Human review","Approval","Central database","Dashboard publication"].map((x,i)=><div key={x}><b>{String(i+1).padStart(2,"0")}</b><span>{x}</span>{i<11&&<i>→</i>}</div>)}</div>;
   if (page === "reports") return <div className="template-grid">{["National mining overview","License expiry","Operator compliance","Production report","Production–export reconciliation","Revenue collection","Infrastructure dependency","Exploration evidence summary","Data-quality report","Critical alert report"].map((x,i)=><button key={x}><i>{["▦","▤","◎","▥","↗","₣","⌁","⌖","◫","△"][i]}</i><b>{x}</b><small>PDF · Excel · CSV</small><span>Generate →</span></button>)}</div>;
   if (page === "administration") return <div className="architecture-flow">{[["DATA INPUT","Government databases · APIs · spreadsheets · GIS · company reports"],["VALIDATE & INTEGRATE","Schema mapping · unit standardization · entity matching · human approval"],["CENTRAL DATABASE","Companies · licenses · mines · production · exports · payments · evidence"],["ANALYTICS","KPIs · reconciliation · alerts · forecasting · evidence ranking"],["PRESENTATION","Maps · charts · records · reports · executive summaries"]].map((x,i)=><div key={x[0]}><b>{x[0]}</b><span>{x[1]}</span>{i<4&&<i>→</i>}</div>)}</div>;
@@ -1047,7 +1110,7 @@ function SecondaryVisual({ page, spec }: { page: PageKey; spec: typeof moduleSpe
   return <div className="component-bars">{bars.map((x,i)=><div key={x[0]}><span>{x[0]}<b>{x[1]}</b></span><i><em style={{width:`${[82,68,91,55,76,63][i]}%`}}/></i><small>{x[2]}</small></div>)}</div>;
 }
 
-function GenericModule({ page, onOpen }: { page: Exclude<PageKey,"overview"|"exploration"|"licenses">; onOpen: (name:string)=>void }) {
+function GenericModule({ page, onOpen }: { page: Exclude<PageKey,"overview"|"exploration"|"licenses"|"environment">; onOpen: (name:string)=>void }) {
   const spec = moduleSpecs[page];
   return <>
     <header className="page-heading"><div><div className={`breadcrumb ${spec.accent}`}>{spec.kicker} <span>/</span> NATIONAL VIEW</div><h1>{spec.title}</h1><p>{spec.subtitle}</p></div><div className="heading-actions"><button className="select-btn">Current year⌄</button><button className="select-btn">All regions⌄</button><button className="primary">⇩ Export view</button></div></header>
@@ -1100,9 +1163,10 @@ export default function Home() {
         {page==="overview" && <Overview />}
         {page==="exploration" && <ExplorationV2 locale={locale} />}
         {page==="licenses" && <Licenses onOpen={setSelected}/>}
-        {!["overview","exploration","licenses"].includes(page) && <GenericModule page={page as Exclude<PageKey,"overview"|"exploration"|"licenses">} onOpen={setSelected}/>}
+        {page==="environment" && <EnvironmentModule onOpen={setSelected}/>}
+        {!["overview","exploration","licenses","environment"].includes(page) && <GenericModule page={page as Exclude<PageKey,"overview"|"exploration"|"licenses"|"environment">} onOpen={setSelected}/>}
       </main>
-      {selected && <><button className="drawer-backdrop" onClick={()=>setSelected("")} aria-label="Close detail panel"/><DetailDrawer name={selected} onClose={()=>setSelected("")} exploration={page==="exploration"}/></>}
+      {selected && <><button className="drawer-backdrop" onClick={()=>setSelected("")} aria-label="Close detail panel"/><DetailDrawer name={selected} onClose={()=>setSelected("")} kind={page==="exploration" ? "exploration" : page==="environment" ? "environment" : "record"}/></>}
       {query && <div className="search-results">Searching national records for “{query}”</div>}
       <button className="floating-search" onClick={()=>{const q=prompt(translateText("Search licenses, operators, mines, targets or regions", locale)); if(q){setQuery(q); setTimeout(()=>setQuery(""),2200)}}}>⌕</button>
     </div>
