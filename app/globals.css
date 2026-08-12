@@ -87,3 +87,4 @@
 .environmental-detail-map .overview-map-stage:has(button:hover) .overview-map-canvas,.environmental-detail-map .overview-map-stage:has(button:focus-visible) .overview-map-canvas,.environmental-detail-map .overview-map-stage:has(.map-feature-selected) .overview-map-canvas{z-index:30}.environmental-detail-map .overview-zoom-tools,.environmental-detail-map .overview-demo-badge{z-index:80}
 @media(max-width:800px){.environmental-command-side{grid-template-columns:1fr;grid-template-rows:460px 300px}}
 .environment-samples-feature.sample-soil{background:#8a6428}.environment-samples-feature.sample-sediment{background:#755690}
+.environment-watersheds-feature.map-feature-selected:not(:hover):not(:focus-visible)>.overview-feature-tooltip{opacity:0!important;visibility:hidden!important}

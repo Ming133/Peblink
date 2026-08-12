@@ -213,6 +213,7 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.match(css, /\.environment-samples-feature/);
   assert.match(css, /\.environment-flow-feature/);
   assert.match(css, /\.environment-watersheds-feature/);
+  assert.match(css, /\.environment-watersheds-feature\.map-feature-selected:not\(:hover\):not\(:focus-visible\)>\.overview-feature-tooltip\{opacity:0!important;visibility:hidden!important\}/);
   assert.match(css, /\.environment-receptors-feature/);
   assert.match(css, /\.environment-boundaries-feature/);
   assert.match(css, /\.environment-rainfall-feature/);
