@@ -243,6 +243,9 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.doesNotMatch(page, /layers\.watersheds && visibleAdvancedFeatures\("watersheds"\)/);
   assert.doesNotMatch(page, /legend-watershed" \/> Watershed/);
   assert.match(page, /Interactive layers <b>10<\/b>/);
+  const initialLayerState = page.match(/useState<Record<EnvironmentLayer, boolean>>\(\{[\s\S]*?\n  \}\);/)?.[0] ?? "";
+  assert.match(initialLayerState, /mines: true,[\s\S]*farms: true,[\s\S]*rivers: true,[\s\S]*pollution: true,[\s\S]*alerts: true/);
+  assert.match(initialLayerState, /samples: false,[\s\S]*flow: false,[\s\S]*watersheds: false,[\s\S]*receptors: false,[\s\S]*boundaries: false,[\s\S]*rainfall: false/);
 });
 
 test("lets content cards grow without clipping translated or zoomed text", async () => {

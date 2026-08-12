@@ -509,12 +509,12 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
     rivers: true,
     pollution: true,
     alerts: true,
-    samples: true,
-    flow: true,
+    samples: false,
+    flow: false,
     watersheds: false,
-    receptors: true,
-    boundaries: true,
-    rainfall: true,
+    receptors: false,
+    boundaries: false,
+    rainfall: false,
   });
   const [hoveredFeature, setHoveredFeature] = useState<OverviewMapFeature | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<OverviewMapFeature | null>(null);
