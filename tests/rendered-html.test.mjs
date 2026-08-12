@@ -168,6 +168,31 @@ test("keeps the English source while switching through multiple languages", asyn
   assert.equal(current, "证据图层");
 });
 
+test("fills Export & Corridors with an interactive mine-to-port flow chart", async () => {
+  const [page, css, i18n] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/i18n.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /function MineToPortFlowChart/);
+  assert.match(page, /if \(page === "export"\) return <MineToPortFlowChart\/>/);
+  assert.match(page, /type ExportFlowMetric = "volume" \| "value" \| "delays"/);
+  assert.match(page, /North Ridge Bauxite/);
+  assert.match(page, /Trans-Guinean Corridor/);
+  assert.match(page, /Morebaya Port/);
+  assert.match(page, /United Arab Emirates/);
+  assert.match(page, /setSelectedFlowId\(current => current === id \? "" : id\)/);
+  assert.match(page, /aria-pressed=\{metric === id\}/);
+  assert.match(page, /className="export-flow-tooltip" role="tooltip"/);
+  assert.match(page, /63\.1 Mt · USD 4\.8B · 47 active · 6 delayed/);
+  assert.match(css, /Export & Corridors — interactive mine-to-market flow chart/);
+  assert.match(css, /\.export-flow-route:hover \.export-flow-tooltip/);
+  assert.match(css, /\.export-flow-route\.dimmed\{opacity:\.25\}/);
+  assert.match(i18n, /Volume exporté/);
+  assert.match(i18n, /运输走廊/);
+});
+
 test("completes the environment-only monitoring workspace", async () => {
   const [page, css] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),

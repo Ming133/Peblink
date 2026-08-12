@@ -1320,9 +1320,62 @@ function RelationshipNetwork({ kind }: { kind: PageKey }) {
   </div>;
 }
 
+type ExportFlowMetric = "volume" | "value" | "delays";
+
+const mineToPortFlows = [
+  { id: "north-kamsar", mine: "North Ridge Bauxite", corridor: "Boké–Kamsar Rail", port: "Kamsar Port", destination: "China", commodity: "Bauxite", volume: 24.6, value: 1.52, shipments: 18, delay: 0.4, delayedShipments: 0, status: "On schedule", color: "#2f79a4" },
+  { id: "sangaredi-kamsar", mine: "Sangarédi Plateau", corridor: "Boké–Kamsar Rail", port: "Kamsar Port", destination: "China", commodity: "Bauxite", volume: 15.3, value: 0.98, shipments: 11, delay: 1.1, delayedShipments: 0, status: "Capacity watch", color: "#2f79a4" },
+  { id: "simandou-morebaya", mine: "Simandou North", corridor: "Trans-Guinean Corridor", port: "Morebaya Port", destination: "China", commodity: "Iron ore", volume: 13.1, value: 1.42, shipments: 8, delay: 2.4, delayedShipments: 2, status: "Customs watch", color: "#6f5c91" },
+  { id: "kindia-conakry", mine: "Kindia Bauxite", corridor: "Kindia–Conakry Rail", port: "Conakry Port", destination: "Europe", commodity: "Bauxite", volume: 9.8, value: 0.36, shipments: 6, delay: 3.6, delayedShipments: 4, status: "Delayed route", color: "#c06b2d" },
+  { id: "forest-conakry", mine: "Forest Belt Gold", corridor: "National Road N1", port: "Conakry Port", destination: "United Arab Emirates", commodity: "Gold", volume: 0.3, value: 0.52, shipments: 4, delay: 0.8, delayedShipments: 0, status: "On schedule", color: "#b48a27" },
+] as const;
+
+function MineToPortFlowChart() {
+  const [metric, setMetric] = useState<ExportFlowMetric>("volume");
+  const [selectedFlowId, setSelectedFlowId] = useState("");
+  const metricValue = (flow: typeof mineToPortFlows[number]) => metric === "volume" ? flow.volume : metric === "value" ? flow.value : flow.delay;
+  const maxMetric = Math.max(...mineToPortFlows.map(metricValue));
+  const selectedFlow = mineToPortFlows.find(flow => flow.id === selectedFlowId);
+  const toggleFlow = (id: string) => setSelectedFlowId(current => current === id ? "" : id);
+
+  return <div className="mine-port-flow-chart" onClick={() => setSelectedFlowId("")}>
+    <div className="export-flow-toolbar" onClick={event => event.stopPropagation()}>
+      <div className="export-metric-tabs" aria-label="Flow metric">
+        {([['volume','Export volume'],['value','Export value'],['delays','Delays']] as const).map(([id,label]) => <button key={id} className={metric === id ? "active" : ""} aria-pressed={metric === id} onClick={() => setMetric(id)}>{label}</button>)}
+      </div>
+      <div className="export-flow-legend"><span><i className="bauxite"/>Bauxite</span><span><i className="iron"/>Iron ore</span><span><i className="gold"/>Gold</span><span><i className="delayed"/>Delayed route</span></div>
+      {selectedFlowId && <button className="export-flow-clear" onClick={() => setSelectedFlowId("")}>Clear selection ×</button>}
+    </div>
+    <div className="export-flow-columns" aria-hidden="true"><span>Mine</span><span>Transport corridor</span><span>Export port</span><span>Destination</span></div>
+    <div className="export-flow-routes">
+      {mineToPortFlows.map(flow => {
+        const thickness = 4 + (metricValue(flow) / maxMetric) * 12;
+        const active = selectedFlowId === flow.id;
+        const dimmed = Boolean(selectedFlowId && !active);
+        const detail = `${flow.volume.toFixed(1)} Mt · USD ${flow.value.toFixed(2)}B · ${flow.shipments} active shipments · ${flow.delay.toFixed(1)} day average delay`;
+        const select = (event: React.MouseEvent) => { event.stopPropagation(); toggleFlow(flow.id); };
+        return <div key={flow.id} className={`export-flow-route ${active ? "selected" : ""} ${dimmed ? "dimmed" : ""} ${flow.delayedShipments ? "has-delay" : ""}`}>
+          <button onClick={select} aria-pressed={active} aria-label={`Select route from ${flow.mine}`}><i style={{backgroundColor:flow.color}}/> <span><b>{flow.mine}</b><small>{flow.commodity}</small></span></button>
+          <span className="export-flow-link"><i style={{height:`${thickness}px`,backgroundColor:flow.color}}/></span>
+          <button onClick={select} aria-pressed={active} aria-label={`Select ${flow.corridor}`}><i style={{backgroundColor:flow.color}}>⌁</i><span><b>{flow.corridor}</b><small>{flow.shipments} active shipments</small></span></button>
+          <span className="export-flow-link"><i style={{height:`${thickness}px`,backgroundColor:flow.color}}/></span>
+          <button onClick={select} aria-pressed={active} aria-label={`Select ${flow.port}`}><i style={{backgroundColor:flow.color}}>↗</i><span><b>{flow.port}</b><small>{flow.status}</small></span></button>
+          <span className="export-flow-link"><i style={{height:`${thickness}px`,backgroundColor:flow.color}}/></span>
+          <button onClick={select} aria-pressed={active} aria-label={`Select destination ${flow.destination}`}><i style={{backgroundColor:flow.color}}>●</i><span><b>{flow.destination}</b><small>{metric === "volume" ? `${flow.volume.toFixed(1)} Mt` : metric === "value" ? `USD ${flow.value.toFixed(2)}B` : `${flow.delay.toFixed(1)} days`}</small></span></button>
+          <span className="export-flow-tooltip" role="tooltip"><b>{flow.mine} → {flow.destination}</b><small>{detail}</small><em className={flow.delayedShipments ? "warning" : ""}>{flow.status}{flow.delayedShipments ? ` · ${flow.delayedShipments} delayed shipments` : ""}</em></span>
+        </div>;
+      })}
+    </div>
+    <div className="export-flow-summary" aria-live="polite">
+      <span><b>{selectedFlow ? selectedFlow.mine : "5 visible flows"}</b><small>{selectedFlow ? `${selectedFlow.port} · ${selectedFlow.destination}` : "Routes reconcile with the current reporting summary."}</small></span>
+      <strong>{selectedFlow ? `${selectedFlow.volume.toFixed(1)} Mt · USD ${selectedFlow.value.toFixed(2)}B` : "63.1 Mt · USD 4.8B · 47 active · 6 delayed"}</strong>
+    </div>
+  </div>;
+}
+
 function MetricVisual({ page }: { page: PageKey }) {
   if (page === "ownership" || page === "infrastructure" || page === "revenue") return <RelationshipNetwork kind={page}/>;
-  if (page === "export") return <MapVisual onSelect={()=>{}}/>;
+  if (page === "export") return <MineToPortFlowChart/>;
   if (page === "quality") return <div className="workflow">{["Data submitted","File & format check","Required fields","Unit & date standardization","Coordinate validation","Duplicate detection","Entity matching","Cross-source comparison","Human review","Approval","Central database","Dashboard publication"].map((x,i)=><div key={x}><b>{String(i+1).padStart(2,"0")}</b><span>{x}</span>{i<11&&<i>→</i>}</div>)}</div>;
   if (page === "reports") return <div className="template-grid">{["National mining overview","License expiry","Operator compliance","Production report","Production–export reconciliation","Revenue collection","Infrastructure dependency","Exploration evidence summary","Data-quality report","Critical alert report"].map((x,i)=><button key={x}><i>{["▦","▤","◎","▥","↗","₣","⌁","⌖","◫","△"][i]}</i><b>{x}</b><small>PDF · Excel · CSV</small><span>Generate →</span></button>)}</div>;
   if (page === "administration") return <div className="architecture-flow">{[["DATA INPUT","Government databases · APIs · spreadsheets · GIS · company reports"],["VALIDATE & INTEGRATE","Schema mapping · unit standardization · entity matching · human approval"],["CENTRAL DATABASE","Companies · licenses · mines · production · exports · payments · evidence"],["ANALYTICS","KPIs · reconciliation · alerts · forecasting · evidence ranking"],["PRESENTATION","Maps · charts · records · reports · executive summaries"]].map((x,i)=><div key={x[0]}><b>{x[0]}</b><span>{x[1]}</span>{i<4&&<i>→</i>}</div>)}</div>;
