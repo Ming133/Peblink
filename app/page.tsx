@@ -33,6 +33,9 @@ const kpis = [
 ];
 
 type OverviewLayer = "mines" | "farms" | "rivers" | "pollution" | "alerts";
+type EnvironmentLayer = OverviewLayer | "samples" | "flow" | "watersheds" | "receptors" | "boundaries" | "rainfall";
+type EnvironmentTime = "current" | "30d" | "12m";
+type InvestigationStatus = "Possible risk" | "Awaiting sampling" | "Laboratory validation" | "Confirmed demo" | "Closed";
 
 type OverviewMapFeature = {
   id: string;
@@ -43,8 +46,16 @@ type OverviewMapFeature = {
   x: number;
   y: number;
   width?: number;
+  height?: number;
   angle?: number;
   size?: "small" | "medium" | "large";
+  symbol?: string;
+  variant?: string;
+  status?: string;
+  risk?: "Low" | "Moderate" | "Medium" | "High" | "Critical";
+  confidence?: "Low" | "Moderate" | "High";
+  timestamp?: string;
+  periods?: EnvironmentTime[];
 };
 
 const overviewLayerOptions: Array<{ id: OverviewLayer; label: string; count: number }> = [
@@ -53,6 +64,26 @@ const overviewLayerOptions: Array<{ id: OverviewLayer; label: string; count: num
   { id: "rivers", label: "Rivers", count: 4 },
   { id: "pollution", label: "Pollution zones", count: 3 },
   { id: "alerts", label: "Alerts", count: 3 },
+];
+
+const environmentLayerOptions: Array<{ id: EnvironmentLayer; label: string; count: number }> = [
+  ...overviewLayerOptions,
+  { id: "samples", label: "Sampling points", count: 6 },
+  { id: "flow", label: "Flow direction", count: 4 },
+  { id: "watersheds", label: "Watersheds", count: 3 },
+  { id: "receptors", label: "Sensitive areas", count: 5 },
+  { id: "boundaries", label: "Site boundaries", count: 4 },
+  { id: "rainfall", label: "Rainfall & runoff", count: 3 },
+];
+
+const environmentTimeOptions: Array<{ id: EnvironmentTime; label: string }> = [
+  { id: "current", label: "Current view" },
+  { id: "30d", label: "Last 30 days" },
+  { id: "12m", label: "Past 12 months" },
+];
+
+const investigationStatuses: Array<"All statuses" | InvestigationStatus> = [
+  "All statuses", "Possible risk", "Awaiting sampling", "Laboratory validation", "Confirmed demo", "Closed",
 ];
 
 const overviewMapData: Record<"mines" | "farms" | "rivers" | "pollution", OverviewMapFeature[]> = {
@@ -77,6 +108,54 @@ const overviewMapData: Record<"mines" | "farms" | "rivers" | "pollution", Overvi
     { id: "boke-runoff", name: "Boké Runoff Watch Zone", type: "Potential pollution · Critical", detail: "Illustrative red zone: mine runoff may reach river and rice fields", coordinates: "10.84° N, 14.11° W", x: 27, y: 34, size: "large" },
     { id: "kankan-tailings", name: "Kankan Tailings Watch Zone", type: "Potential pollution · High", detail: "Illustrative red zone: tailings-water pathway under review", coordinates: "10.08° N, 9.29° W", x: 68, y: 54, size: "medium" },
     { id: "simandou-sediment", name: "Simandou Sediment Watch Zone", type: "Potential pollution · Medium", detail: "Illustrative red zone: elevated sediment exposure scenario", coordinates: "8.96° N, 8.96° W", x: 63, y: 72, size: "medium" },
+  ],
+};
+
+const environmentInvestigationData: OverviewMapFeature[] = [
+  { id: "boke-runoff", name: "Boké Runoff Watch Zone", type: "Pollution investigation", detail: "Mine-runoff pathway toward Rio Nunez and Kamsar rice fields", coordinates: "10.84° N, 14.11° W", x: 27, y: 34, size: "large", status: "Awaiting sampling", risk: "Critical", confidence: "Moderate", timestamp: "Field visit scheduled · 13 Aug 2026", periods: ["current", "30d", "12m"] },
+  { id: "kankan-tailings", name: "Kankan Tailings Watch Zone", type: "Pollution investigation", detail: "Tailings-water pathway undergoing laboratory QA/QC", coordinates: "10.08° N, 9.29° W", x: 68, y: 54, size: "medium", status: "Laboratory validation", risk: "High", confidence: "High", timestamp: "Samples received · 9 Aug 2026", periods: ["current", "30d", "12m"] },
+  { id: "simandou-sediment", name: "Simandou Sediment Watch Zone", type: "Pollution investigation", detail: "Screening signal for elevated sediment exposure downstream", coordinates: "8.96° N, 8.96° W", x: 63, y: 72, size: "medium", status: "Possible risk", risk: "Medium", confidence: "Low", timestamp: "Satellite review · 6 Aug 2026", periods: ["current", "30d", "12m"] },
+  { id: "kindia-drainage", name: "Kindia Drainage Control Zone", type: "Pollution investigation", detail: "Demonstration case with a validated drainage exceedance and active mitigation", coordinates: "10.02° N, 12.82° W", x: 45, y: 50, size: "small", status: "Confirmed demo", risk: "Moderate", confidence: "High", timestamp: "Mitigation inspection · 4 Aug 2026", periods: ["current", "30d", "12m"] },
+  { id: "labe-restored", name: "Labé Restoration Review Zone", type: "Pollution investigation", detail: "Demonstration investigation closed after control samples met review criteria", coordinates: "11.31° N, 12.29° W", x: 51, y: 28, size: "small", status: "Closed", risk: "Low", confidence: "High", timestamp: "Closed · 22 Jul 2026", periods: ["current", "30d", "12m"] },
+];
+
+const environmentAdvancedMapData: Record<Exclude<EnvironmentLayer, OverviewLayer>, OverviewMapFeature[]> = {
+  samples: [
+    { id: "sample-rio-nunez", name: "Rio Nunez Water Station WQ-BK-04", type: "Water sampling point", detail: "Turbidity and dissolved-metals panel; duplicate sample requested", coordinates: "10.87° N, 14.16° W", x: 31, y: 38, symbol: "W", variant: "sample-water", status: "Requires resampling", risk: "High", confidence: "Moderate", timestamp: "Last sampled · 8 Aug 2026", periods: ["current", "30d", "12m"] },
+    { id: "sample-kamsar-soil", name: "Kamsar Agricultural Soil Point SO-BK-11", type: "Soil sampling point", detail: "Control point beside irrigated rice fields", coordinates: "10.77° N, 14.06° W", x: 21, y: 43, symbol: "S", variant: "sample-soil", status: "Current", risk: "Moderate", confidence: "High", timestamp: "Last sampled · 2 Aug 2026", periods: ["current", "30d", "12m"] },
+    { id: "sample-milo-sediment", name: "Milo River Sediment Point SD-KN-07", type: "Sediment sampling point", detail: "Downstream sediment chemistry and grain-size station", coordinates: "10.04° N, 9.25° W", x: 66, y: 59, symbol: "D", variant: "sample-sediment", status: "Laboratory validation", risk: "High", confidence: "High", timestamp: "Last sampled · 7 Aug 2026", periods: ["current", "30d", "12m"] },
+    { id: "sample-niandan-water", name: "Niandan Water Station WQ-NZ-03", type: "Water sampling point", detail: "Seasonal suspended-solids and conductivity monitoring", coordinates: "9.18° N, 9.04° W", x: 59, y: 75, symbol: "W", variant: "sample-water", status: "Current", risk: "Medium", confidence: "Moderate", timestamp: "Last sampled · 30 Jul 2026", periods: ["current", "30d", "12m"] },
+    { id: "sample-kindia-control", name: "Kindia Control Soil Point SO-KD-02", type: "Soil sampling point", detail: "Reference location outside the screened drainage corridor", coordinates: "10.06° N, 12.91° W", x: 39, y: 58, symbol: "S", variant: "sample-soil", status: "Control sample", risk: "Low", confidence: "High", timestamp: "Last sampled · 18 Jun 2026", periods: ["12m"] },
+    { id: "sample-labe-sediment", name: "Labé Sediment Archive SD-LB-05", type: "Sediment sampling point", detail: "Archived wet-season baseline used for comparison", coordinates: "11.29° N, 12.33° W", x: 54, y: 34, symbol: "D", variant: "sample-sediment", status: "Historical baseline", risk: "Low", confidence: "Moderate", timestamp: "Last sampled · 16 Nov 2025", periods: ["12m"] },
+  ],
+  flow: [
+    { id: "flow-rio-nunez", name: "Rio Nunez Downstream Path", type: "River flow direction", detail: "Illustrative movement toward the coastal estuary and Kamsar farming area", coordinates: "10.89° N, 14.20° W", x: 14, y: 32, width: 18, angle: 18, symbol: "→", status: "Wet-season flow", risk: "High", confidence: "Moderate", periods: ["current", "30d", "12m"] },
+    { id: "flow-konkoure", name: "Konkouré Downstream Path", type: "River flow direction", detail: "Illustrative westward surface-water pathway", coordinates: "10.42° N, 13.18° W", x: 31, y: 45, width: 20, angle: 9, symbol: "→", status: "Normal seasonal flow", risk: "Moderate", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "flow-milo", name: "Milo Downstream Path", type: "River flow direction", detail: "Illustrative pathway past the Kankan tailings review zone", coordinates: "10.12° N, 9.32° W", x: 60, y: 44, width: 15, angle: 58, symbol: "→", status: "Rain-enhanced flow", risk: "High", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "flow-niandan", name: "Niandan Downstream Path", type: "River flow direction", detail: "Illustrative sediment transport direction toward the south-west", coordinates: "9.23° N, 9.08° W", x: 52, y: 69, width: 16, angle: -18, symbol: "→", status: "Wet-season flow", risk: "Medium", confidence: "Moderate", periods: ["current", "30d", "12m"] },
+  ],
+  watersheds: [
+    { id: "watershed-nunez", name: "Lower Rio Nunez Catchment", type: "Watershed boundary", detail: "Connects the Boké mining corridor, coastal wetlands and Kamsar water uses", coordinates: "10.82° N, 14.18° W", x: 25, y: 34, width: 31, height: 35, status: "Priority catchment", risk: "High", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "watershed-konkoure", name: "Konkouré Monitoring Catchment", type: "Watershed boundary", detail: "Regional surface-water monitoring and agricultural-use basin", coordinates: "10.51° N, 12.91° W", x: 47, y: 44, width: 31, height: 35, status: "Routine monitoring", risk: "Moderate", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "watershed-milo", name: "Upper Niger–Milo Catchment", type: "Watershed boundary", detail: "Links Kankan mining, irrigation areas and downstream sediment stations", coordinates: "10.04° N, 9.30° W", x: 69, y: 58, width: 30, height: 39, status: "Sampling priority", risk: "High", confidence: "Moderate", periods: ["current", "30d", "12m"] },
+  ],
+  receptors: [
+    { id: "intake-kamsar", name: "Kamsar Drinking-water Intake", type: "Drinking-water intake", detail: "Demonstration intake screened for upstream runoff exposure", coordinates: "10.79° N, 14.21° W", x: 17, y: 48, symbol: "▼", status: "Protected use", risk: "High", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "wetland-nunez", name: "Rio Nunez Coastal Wetland", type: "Wetland", detail: "Sensitive mangrove and estuary habitat in the lower catchment", coordinates: "10.73° N, 14.31° W", x: 13, y: 57, symbol: "≈", status: "Sensitive habitat", risk: "High", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "intake-milo", name: "Upper Milo Irrigation Intake", type: "Agricultural water intake", detail: "Supplies mixed-crop irrigation beside the Milo River", coordinates: "10.01° N, 9.16° W", x: 76, y: 64, symbol: "▼", status: "Active use", risk: "High", confidence: "Moderate", periods: ["current", "30d", "12m"] },
+    { id: "protected-ziama", name: "Ziama Forest Protection Area", type: "Protected area", detail: "Forest and biodiversity receptor used in environmental screening", coordinates: "8.37° N, 9.29° W", x: 56, y: 83, symbol: "♧", status: "Protected", risk: "Medium", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "protected-badiar", name: "Badiar Buffer Corridor", type: "Protected area", detail: "Illustrative conservation buffer north of the mining corridor", coordinates: "11.64° N, 13.11° W", x: 41, y: 18, symbol: "♧", status: "Buffer zone", risk: "Low", confidence: "Moderate", periods: ["12m"] },
+  ],
+  boundaries: [
+    { id: "boundary-north-ridge", name: "North Ridge Permit GUI-MIN-014", type: "Mining permit boundary", detail: "Demonstration operating boundary and drainage-management responsibility", coordinates: "11.12° N, 14.02° W", x: 29, y: 25, width: 17, height: 17, angle: 7, status: "Active permit", risk: "High", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "boundary-kankan-tailings", name: "Kankan Tailings Facility Boundary", type: "Tailings facility boundary", detail: "Demonstration containment, inspection and monitoring perimeter", coordinates: "10.11° N, 9.31° W", x: 69, y: 50, width: 15, height: 18, angle: -8, status: "Enhanced monitoring", risk: "Critical", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "boundary-fouta", name: "Fouta Exploration Permit GUI-EXP-027", type: "Exploration permit boundary", detail: "Permit area with baseline water and soil monitoring obligations", coordinates: "10.96° N, 12.31° W", x: 49, y: 31, width: 18, height: 17, angle: 5, status: "Baseline monitoring", risk: "Low", confidence: "High", periods: ["current", "30d", "12m"] },
+    { id: "boundary-simandou", name: "Simandou Sediment Control Area", type: "Operational control boundary", detail: "Earthworks and sediment-control inspection perimeter", coordinates: "8.92° N, 8.92° W", x: 65, y: 75, width: 18, height: 16, angle: 11, status: "Inspection due", risk: "High", confidence: "Moderate", periods: ["30d", "12m"] },
+  ],
+  rainfall: [
+    { id: "rain-boke", name: "Boké 72-hour Runoff Hotspot", type: "Rainfall and runoff risk", detail: "Illustrative heavy rainfall increases drainage connectivity toward Rio Nunez", coordinates: "10.91° N, 14.02° W", x: 29, y: 31, width: 25, height: 23, status: "86 mm / 72 h", risk: "Critical", confidence: "Moderate", timestamp: "Forecast window · 11–14 Aug 2026", periods: ["current", "30d", "12m"] },
+    { id: "rain-kankan", name: "Kankan Storm-runoff Cell", type: "Rainfall and runoff risk", detail: "Illustrative storm cell raises short-term tailings-water review priority", coordinates: "10.07° N, 9.33° W", x: 70, y: 53, width: 23, height: 22, status: "54 mm / 72 h", risk: "High", confidence: "Moderate", timestamp: "Forecast window · 11–14 Aug 2026", periods: ["current", "30d", "12m"] },
+    { id: "rain-nzerekore", name: "Nzérékoré Saturated-ground Zone", type: "Rainfall and runoff risk", detail: "Illustrative saturated ground increases sediment mobilisation potential", coordinates: "8.89° N, 9.01° W", x: 61, y: 76, width: 24, height: 22, status: "Wet-season anomaly", risk: "High", confidence: "Low", timestamp: "Observed · 3 Aug 2026", periods: ["30d", "12m"] },
   ],
 };
 
@@ -388,25 +467,40 @@ function DetailDrawer({ name, onClose, kind = "record" }: { name: string; onClos
   );
 }
 
-function OverviewRiskMap() {
+function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: boolean }) {
   const [zoom, setZoom] = useState(1);
-  const [layers, setLayers] = useState<Record<OverviewLayer, boolean>>({
+  const [layers, setLayers] = useState<Record<EnvironmentLayer, boolean>>({
     mines: true,
     farms: true,
     rivers: true,
     pollution: true,
     alerts: true,
+    samples: true,
+    flow: true,
+    watersheds: true,
+    receptors: true,
+    boundaries: true,
+    rainfall: true,
   });
   const [hoveredFeature, setHoveredFeature] = useState<OverviewMapFeature | null>(null);
-  const activeLayerCount = Object.values(layers).filter(Boolean).length;
+  const [selectedFeature, setSelectedFeature] = useState<OverviewMapFeature | null>(null);
+  const [timePeriod, setTimePeriod] = useState<EnvironmentTime>("current");
+  const [investigationStatus, setInvestigationStatus] = useState<"All statuses" | InvestigationStatus>("All statuses");
+  const layerOptions = environmentalMode ? environmentLayerOptions : overviewLayerOptions;
+  const activeLayerCount = layerOptions.filter(option => layers[option.id]).length;
+  const currentFeature = hoveredFeature || selectedFeature;
   const alertPositions = [{ x: 31, y: 30 }, { x: 74, y: 51 }, { x: 70, y: 70 }];
 
-  const toggleLayer = (layer: OverviewLayer) => {
+  const toggleLayer = (layer: EnvironmentLayer) => {
     setLayers(current => ({ ...current, [layer]: !current[layer] }));
   };
 
   const setAllLayers = (visible: boolean) => {
-    setLayers({ mines: visible, farms: visible, rivers: visible, pollution: visible, alerts: visible });
+    setLayers(current => {
+      const next = { ...current };
+      layerOptions.forEach(option => { next[option.id] = visible; });
+      return next;
+    });
   };
 
   const changeZoom = (amount: number) => {
@@ -415,13 +509,44 @@ function OverviewRiskMap() {
 
   const focusFeature = (feature: OverviewMapFeature) => setHoveredFeature(feature);
   const clearFeature = () => setHoveredFeature(null);
+  const selectFeature = (feature: OverviewMapFeature) => setSelectedFeature(feature);
+  const isSelected = (feature: OverviewMapFeature) => selectedFeature?.id === feature.id;
+  const matchesTime = (feature: OverviewMapFeature) => !feature.periods || feature.periods.includes(timePeriod);
+  const pollutionFeatures = environmentalMode
+    ? environmentInvestigationData.filter(feature => matchesTime(feature) && (investigationStatus === "All statuses" || feature.status === investigationStatus))
+    : overviewMapData.pollution;
+  const visibleAdvancedFeatures = (layer: Exclude<EnvironmentLayer, OverviewLayer>) => environmentAdvancedMapData[layer].filter(matchesTime);
+
+  const renderAdvancedFeature = (layer: Exclude<EnvironmentLayer, OverviewLayer>, feature: OverviewMapFeature) => {
+    const rotated = feature.angle || 0;
+    const transform = layer === "flow" ? `rotate(${rotated}deg)` : feature.angle ? `translate(-50%, -50%) rotate(${rotated}deg)` : undefined;
+    return <button
+      key={feature.id}
+      className={`environment-map-feature environment-${layer}-feature ${feature.variant || ""} ${isSelected(feature) ? "map-feature-selected" : ""}`}
+      style={{ left: `${feature.x}%`, top: `${feature.y}%`, width: feature.width ? `${feature.width}%` : undefined, height: feature.height ? `${feature.height}%` : undefined, transform }}
+      onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
+      onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+      onClick={() => selectFeature(feature)}
+      aria-pressed={isSelected(feature)}
+      aria-label={`${feature.name}, ${feature.type}, ${feature.coordinates}`}
+    >
+      <i>{feature.symbol}</i>
+      <span className="overview-feature-tooltip" style={rotated ? { transform: `translate(-50%, -100%) rotate(${-rotated}deg)` } : undefined}>
+        <b>{feature.name}</b><small>{feature.type}</small>
+        {feature.status && <small><strong>Status</strong> · {feature.status}</small>}
+        {(feature.risk || feature.confidence) && <small className="environment-tooltip-metrics"><strong>Risk</strong> {feature.risk} · <strong>Confidence</strong> {feature.confidence}</small>}
+        {feature.timestamp && <small>{feature.timestamp}</small>}<em>{feature.coordinates}</em>
+      </span>
+    </button>;
+  };
 
   return (
-    <div className="overview-risk-map">
-      <div className="overview-layer-controls" aria-label="Map layer filters">
-        <div className="layer-filter-title"><b>FILTER MAP</b><span>{activeLayerCount} of 5 layers visible</span></div>
-        <div className="layer-filter-options">
-          {overviewLayerOptions.map(option => (
+    <div className={`overview-risk-map ${environmentalMode ? "environmental-detail-map" : ""}`}>
+      <div className="overview-map-control-shell">
+        <div className="overview-layer-controls" aria-label="Map layer filters">
+          <div className="layer-filter-title"><b>FILTER MAP</b><span>{activeLayerCount} of {layerOptions.length} layers visible</span></div>
+          <div className="layer-filter-options">
+            {layerOptions.map(option => (
             <button
               key={option.id}
               className={`overview-layer-toggle layer-${option.id} ${layers[option.id] ? "active" : ""}`}
@@ -430,12 +555,18 @@ function OverviewRiskMap() {
             >
               <i /> {option.label} <b>{option.count}</b>
             </button>
-          ))}
+            ))}
+          </div>
+          <div className="layer-filter-actions"><button onClick={() => setAllLayers(true)}>Show all</button><button onClick={() => setAllLayers(false)}>Clear</button></div>
         </div>
-        <div className="layer-filter-actions"><button onClick={() => setAllLayers(true)}>Show all</button><button onClick={() => setAllLayers(false)}>Clear</button></div>
+        {environmentalMode && <div className="environment-map-context-controls">
+          <label><span>Time period</span><select value={timePeriod} onChange={event => setTimePeriod(event.target.value as EnvironmentTime)}>{environmentTimeOptions.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label>
+          <div className="environment-status-filter" aria-label="Pollution investigation status"><span>Investigation status</span>{investigationStatuses.map(status => <button key={status} className={investigationStatus === status ? "active" : ""} aria-pressed={investigationStatus === status} onClick={() => setInvestigationStatus(status)}>{status}</button>)}</div>
+          <div className="environment-confidence-key"><span><i className="risk-key" /> Risk level</span><span><i className="confidence-key" /> Data confidence</span></div>
+        </div>}
       </div>
 
-      <div className="overview-map-stage">
+      <div className="overview-map-stage" onClick={event => { if (event.target === event.currentTarget) setSelectedFeature(null); }}>
         <div className="overview-zoom-tools" aria-label="Map zoom controls">
           <button onClick={() => changeZoom(0.2)} disabled={zoom >= 2} aria-label="Zoom in">＋</button>
           <button onClick={() => changeZoom(-0.2)} disabled={zoom <= 0.8} aria-label="Zoom out">−</button>
@@ -452,13 +583,18 @@ function OverviewRiskMap() {
           <span className="overview-region-label region-kindia">KINDIA</span><span className="overview-region-label region-kankan">KANKAN</span>
           <span className="overview-region-label region-nzerekore">NZÉRÉKORÉ</span>
 
+          {environmentalMode && layers.watersheds && visibleAdvancedFeatures("watersheds").map(feature => renderAdvancedFeature("watersheds", feature))}
+          {environmentalMode && layers.rainfall && visibleAdvancedFeatures("rainfall").map(feature => renderAdvancedFeature("rainfall", feature))}
+          {environmentalMode && layers.boundaries && visibleAdvancedFeatures("boundaries").map(feature => renderAdvancedFeature("boundaries", feature))}
+
           {layers.rivers && overviewMapData.rivers.map(feature => (
             <button
               key={feature.id}
-              className="overview-river-feature"
+              className={`overview-river-feature ${isSelected(feature) ? "map-feature-selected" : ""}`}
               style={{ left: `${feature.x}%`, top: `${feature.y}%`, width: `${feature.width}%`, transform: `rotate(${feature.angle}deg)` }}
               onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
               onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+              onClick={() => selectFeature(feature)} aria-pressed={isSelected(feature)}
               aria-label={`${feature.name}, ${feature.coordinates}`}
             >
               <i />
@@ -468,13 +604,16 @@ function OverviewRiskMap() {
             </button>
           ))}
 
+          {environmentalMode && layers.flow && visibleAdvancedFeatures("flow").map(feature => renderAdvancedFeature("flow", feature))}
+
           {layers.farms && overviewMapData.farms.map(feature => (
             <button
               key={feature.id}
-              className={`overview-farm-feature ${feature.size || "medium"}`}
+              className={`overview-farm-feature ${feature.size || "medium"} ${isSelected(feature) ? "map-feature-selected" : ""}`}
               style={{ left: `${feature.x}%`, top: `${feature.y}%` }}
               onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
               onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+              onClick={() => selectFeature(feature)} aria-pressed={isSelected(feature)}
               aria-label={`${feature.name}, ${feature.coordinates}`}
             >
               <i />
@@ -482,27 +621,29 @@ function OverviewRiskMap() {
             </button>
           ))}
 
-          {layers.pollution && overviewMapData.pollution.map(feature => (
+          {layers.pollution && pollutionFeatures.map(feature => (
             <button
               key={feature.id}
-              className={`overview-pollution-feature ${feature.size || "medium"}`}
+              className={`overview-pollution-feature ${feature.size || "medium"} status-${feature.status?.toLowerCase().replaceAll(" ", "-") || "potential"} ${isSelected(feature) ? "map-feature-selected" : ""}`}
               style={{ left: `${feature.x}%`, top: `${feature.y}%` }}
               onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
               onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+              onClick={() => selectFeature(feature)} aria-pressed={isSelected(feature)}
               aria-label={`${feature.name}, ${feature.coordinates}`}
             >
               <i />
-              <span className="overview-feature-tooltip"><b>{feature.name}</b><small>{feature.type}</small><em>{feature.coordinates}</em></span>
+              <span className="overview-feature-tooltip"><b>{feature.name}</b><small>{feature.type}</small>{feature.status && <small><strong>Status</strong> · {feature.status}</small>}{(feature.risk || feature.confidence) && <small className="environment-tooltip-metrics"><strong>Risk</strong> {feature.risk} · <strong>Confidence</strong> {feature.confidence}</small>}{feature.timestamp && <small>{feature.timestamp}</small>}<em>{feature.coordinates}</em></span>
             </button>
           ))}
 
           {layers.mines && overviewMapData.mines.map(feature => (
             <button
               key={feature.id}
-              className="overview-mine-feature"
+              className={`overview-mine-feature ${isSelected(feature) ? "map-feature-selected" : ""}`}
               style={{ left: `${feature.x}%`, top: `${feature.y}%` }}
               onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
               onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+              onClick={() => selectFeature(feature)} aria-pressed={isSelected(feature)}
               aria-label={`${feature.name}, ${feature.coordinates}`}
             >
               <i>◆</i>
@@ -510,15 +651,19 @@ function OverviewRiskMap() {
             </button>
           ))}
 
+          {environmentalMode && layers.samples && visibleAdvancedFeatures("samples").map(feature => renderAdvancedFeature("samples", feature))}
+          {environmentalMode && layers.receptors && visibleAdvancedFeatures("receptors").map(feature => renderAdvancedFeature("receptors", feature))}
+
           {layers.alerts && overviewEnvironmentalAlerts.map((alert, index) => {
             const feature: OverviewMapFeature = { id: alert.id, name: alert.title, type: `${alert.level} alert`, detail: `Potentially affected: ${alert.affected}`, coordinates: alert.coordinates, ...alertPositions[index] };
             return (
               <button
                 key={alert.id}
-                className={`overview-alert-marker alert-${alert.color}`}
+                className={`overview-alert-marker alert-${alert.color} ${isSelected(feature) ? "map-feature-selected" : ""}`}
                 style={{ left: `${alertPositions[index].x}%`, top: `${alertPositions[index].y}%` }}
                 onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
                 onFocus={() => focusFeature(feature)} onBlur={clearFeature}
+                onClick={() => selectFeature(feature)} aria-pressed={isSelected(feature)}
                 aria-label={`${alert.level} alert: ${alert.title}`}
               >
                 <b className="overview-alert-glyph" aria-hidden>!</b>
@@ -530,16 +675,17 @@ function OverviewRiskMap() {
 
         <div className="overview-map-legend">
           <span><i className="legend-mine" /> Mine</span><span><i className="legend-farm" /> Farmland</span><span><i className="legend-river" /> River</span><span><i className="legend-pollution" /> Potential pollution</span><span><i className="legend-alert" /> Alert</span>
+          {environmentalMode && <><span><i className="legend-sample" /> Sample</span><span><i className="legend-flow" /> Flow</span><span><i className="legend-watershed" /> Watershed</span><span><i className="legend-receptor" /> Sensitive area</span><span><i className="legend-boundary" /> Boundary</span><span><i className="legend-rainfall" /> Runoff risk</span></>}
         </div>
         <div className="overview-map-scale">0&nbsp;&nbsp;&nbsp;50&nbsp;&nbsp;&nbsp;100 km</div>
       </div>
 
       <div className="overview-map-readout" aria-live="polite">
-        <span className={`readout-icon ${hoveredFeature ? "active" : ""}`}>⌖</span>
-        {hoveredFeature ? (
-          <><div><b>{hoveredFeature.name}</b><small>{hoveredFeature.detail}</small></div><strong>{hoveredFeature.coordinates}</strong></>
+        <span className={`readout-icon ${currentFeature ? "active" : ""}`}>⌖</span>
+        {currentFeature ? (
+          <><div><b>{currentFeature.name}</b><small>{currentFeature.detail}{currentFeature.status ? ` · ${currentFeature.status}` : ""}{currentFeature.risk ? ` · Risk ${currentFeature.risk}` : ""}{currentFeature.confidence ? ` · Confidence ${currentFeature.confidence}` : ""}</small></div><strong>{currentFeature.coordinates}</strong></>
         ) : (
-          <><div><b>Hover over a map feature</b><small>Names, feature details, and coordinates appear here automatically.</small></div><strong>Demo coordinates</strong></>
+          <><div><b>{environmentalMode ? "Click or hover over an environmental feature" : "Hover over a map feature"}</b><small>{environmentalMode ? "Every visible layer contains demonstration records with status, risk, confidence and coordinates." : "Names, feature details, and coordinates appear here automatically."}</small></div><strong>{environmentalMode ? environmentTimeOptions.find(option => option.id === timePeriod)?.label : "Demo coordinates"}</strong></>
         )}
       </div>
     </div>
@@ -608,8 +754,8 @@ function EnvironmentModule({ onOpen }: { onOpen: (name: string) => void }) {
 
     <section className="environmental-command-grid">
       <article className="panel environmental-map-panel">
-        <div className="panel-head"><div><span className="section-kicker green">NATIONAL ENVIRONMENTAL MONITORING</span><h3>Mining, water, farmland & pollution exposure map</h3></div><div className="panel-actions"><button>Live layers <b>5</b></button><button aria-label="Open map options">•••</button></div></div>
-        <OverviewRiskMap />
+        <div className="panel-head"><div><span className="section-kicker green">NATIONAL ENVIRONMENTAL MONITORING</span><h3>Mining, water, farmland & pollution exposure map</h3></div><div className="panel-actions"><button>Interactive layers <b>11</b></button><button aria-label="Open map options">•••</button></div></div>
+        <OverviewRiskMap environmentalMode />
       </article>
 
       <aside className="environmental-command-side">
