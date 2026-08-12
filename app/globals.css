@@ -69,3 +69,6 @@
 .exploration-summary-grid>article,.exploration-summary-grid .evidence-panel{height:auto;min-height:358px}.exploration-summary-grid-v2>article{height:auto;min-height:365px}
 .environmental-workflow-card,.environmental-obligations-card{height:auto;min-height:250px}.environmental-workflow-card>div:last-child{height:auto;min-height:191px}.environmental-obligations-card>div:last-child{padding:10px 13px 13px}.environmental-obligations-card>div:last-child>span{min-height:42px}
 @media(max-width:800px){.environmental-workflow-card{min-height:500px}.environmental-obligations-card{min-height:250px}}
+
+/* Keep pollution-zone labels level even though the illustrated zone is rotated. */
+.overview-pollution-feature>.overview-feature-tooltip{transform:translate(-50%,-100%) rotate(-8deg);transform-origin:50% 100%}
