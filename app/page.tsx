@@ -70,7 +70,6 @@ const environmentLayerOptions: Array<{ id: EnvironmentLayer; label: string; coun
   ...overviewLayerOptions,
   { id: "samples", label: "Sampling points", count: 6 },
   { id: "flow", label: "Flow direction", count: 4 },
-  { id: "watersheds", label: "Watersheds", count: 3 },
   { id: "receptors", label: "Sensitive areas", count: 5 },
   { id: "boundaries", label: "Site boundaries", count: 4 },
   { id: "rainfall", label: "Rainfall & runoff", count: 3 },
@@ -484,7 +483,7 @@ function DetailDrawer({ name, onClose, kind = "record" }: { name: string; onClos
           </div>
           <section><h4>Potential impact</h4><p>This demonstration record identifies a possible pathway between mining activity, surface water, and nearby farmland.</p></section>
           <section><h4>Evidence currently available</h4><ul><li>Map-based proximity screening</li><li>Illustrative water and sediment observations</li><li>Environmental permit and inspection records</li></ul></section>
-          <section><h4>Affected features</h4><p>Potentially affected rivers, agricultural areas, watersheds, and downstream monitoring points are shown on the environmental map.</p></section>
+          <section><h4>Affected features</h4><p>Potentially affected rivers, agricultural areas, sensitive locations, and downstream monitoring points are shown on the environmental map.</p></section>
           <section><h4>Required action</h4><p><b>Complete field sampling and agency review</b> before changing the alert status or reaching an environmental conclusion.</p></section>
           <section><h4>Limitations</h4><p>This is demonstration data. It is not a real contamination finding and must not be used as evidence of environmental harm.</p></section>
         </>
@@ -512,7 +511,7 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
     alerts: true,
     samples: true,
     flow: true,
-    watersheds: true,
+    watersheds: false,
     receptors: true,
     boundaries: true,
     rainfall: true,
@@ -644,7 +643,6 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
           <span className="overview-region-label region-kindia">KINDIA</span><span className="overview-region-label region-kankan">KANKAN</span>
           <span className="overview-region-label region-nzerekore">NZÉRÉKORÉ</span>
 
-          {environmentalMode && layers.watersheds && visibleAdvancedFeatures("watersheds").map(feature => renderAdvancedFeature("watersheds", feature))}
           {environmentalMode && layers.rainfall && visibleAdvancedFeatures("rainfall").map(feature => renderAdvancedFeature("rainfall", feature))}
           {environmentalMode && layers.boundaries && visibleAdvancedFeatures("boundaries").map(feature => renderAdvancedFeature("boundaries", feature))}
 
@@ -741,7 +739,7 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
 
         <div className="overview-map-legend">
           <span><i className="legend-mine" /> Mine</span><span><i className="legend-farm" /> Farmland</span><span><i className="legend-river" /> River</span><span><i className="legend-pollution" /> Potential pollution</span><span><i className="legend-alert" /> Alert</span>
-          {environmentalMode && <><span><i className="legend-sample" /> Sample</span><span><i className="legend-flow" /> Flow</span><span><i className="legend-watershed" /> Watershed</span><span><i className="legend-receptor" /> Sensitive area</span><span><i className="legend-boundary" /> Boundary</span><span><i className="legend-rainfall" /> Runoff risk</span></>}
+          {environmentalMode && <><span><i className="legend-sample" /> Sample</span><span><i className="legend-flow" /> Flow</span><span><i className="legend-receptor" /> Sensitive area</span><span><i className="legend-boundary" /> Boundary</span><span><i className="legend-rainfall" /> Runoff risk</span></>}
         </div>
         <div className="overview-map-scale">0&nbsp;&nbsp;&nbsp;50&nbsp;&nbsp;&nbsp;100 km</div>
       </div>
@@ -820,7 +818,7 @@ function EnvironmentModule({ onOpen }: { onOpen: (name: string) => void }) {
 
     <section className="environmental-command-grid">
       <article className="panel environmental-map-panel">
-        <div className="panel-head"><div><span className="section-kicker green">NATIONAL ENVIRONMENTAL MONITORING</span><h3>Mining, water, farmland & pollution exposure map</h3></div><div className="panel-actions"><button>Interactive layers <b>11</b></button><button aria-label="Open map options">•••</button></div></div>
+        <div className="panel-head"><div><span className="section-kicker green">NATIONAL ENVIRONMENTAL MONITORING</span><h3>Mining, water, farmland & pollution exposure map</h3></div><div className="panel-actions"><button>Interactive layers <b>10</b></button><button aria-label="Open map options">•••</button></div></div>
         <OverviewRiskMap environmentalMode />
       </article>
 

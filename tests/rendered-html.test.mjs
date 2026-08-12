@@ -182,7 +182,6 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.match(page, /const environmentLayerOptions/);
   assert.match(page, /Sampling points/);
   assert.match(page, /Flow direction/);
-  assert.match(page, /Watersheds/);
   assert.match(page, /Sensitive areas/);
   assert.match(page, /Site boundaries/);
   assert.match(page, /Rainfall & runoff/);
@@ -216,8 +215,6 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.match(css, /\.environment-map-context-controls/);
   assert.match(css, /\.environment-samples-feature/);
   assert.match(css, /\.environment-flow-feature/);
-  assert.match(css, /\.environment-watersheds-feature/);
-  assert.match(css, /\.environment-watersheds-feature\.map-feature-selected:not\(:hover\):not\(:focus-visible\)>\.overview-feature-tooltip\{opacity:0!important;visibility:hidden!important\}/);
   assert.match(css, /\.environment-receptors-feature/);
   assert.match(css, /\.environment-boundaries-feature/);
   assert.match(css, /\.environment-rainfall-feature/);
@@ -225,6 +222,13 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.match(css, /\.map-feature-dismissed:hover>\.overview-feature-tooltip[^{]*\{opacity:0!important;visibility:hidden!important\}/);
   assert.match(css, /:has\(\.map-feature-selected\) \.overview-map-canvas\{z-index:30\}/);
   assert.match(css, /@media\(max-width:800px\).*\.environmental-workflow-card/s);
+
+  const environmentLayerOptions = page.match(/const environmentLayerOptions[\s\S]*?\n\];/)?.[0] ?? "";
+  assert.doesNotMatch(environmentLayerOptions, /watersheds|Watersheds/);
+  assert.match(page, /watersheds: false/);
+  assert.doesNotMatch(page, /layers\.watersheds && visibleAdvancedFeatures\("watersheds"\)/);
+  assert.doesNotMatch(page, /legend-watershed" \/> Watershed/);
+  assert.match(page, /Interactive layers <b>10<\/b>/);
 });
 
 test("lets content cards grow without clipping translated or zoomed text", async () => {
