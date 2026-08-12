@@ -55,6 +55,8 @@ test("keeps the map interactions and responsive styles in the Overview module", 
   assert.match(css, /\.overview-intelligence-grid/);
   assert.match(css, /\.overview-feature-tooltip/);
   assert.match(css, /\.overview-pollution-feature>\.overview-feature-tooltip\{[^}]*rotate\(-8deg\)/);
+  assert.match(css, /\.overview-farm-feature>\.overview-feature-tooltip\{[^}]*rotate\(8deg\)/);
+  assert.match(css, /\.overview-river-feature:hover[\s\S]*?\.overview-alert-marker:focus-visible\{z-index:60\}/);
   assert.match(css, /@keyframes pollution-pulse/);
   assert.match(css, /@media\(max-width:800px\).*\.overview-risk-map/s);
 });

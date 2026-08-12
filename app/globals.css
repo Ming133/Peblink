@@ -72,3 +72,7 @@
 
 /* Keep pollution-zone labels level even though the illustrated zone is rotated. */
 .overview-pollution-feature>.overview-feature-tooltip{transform:translate(-50%,-100%) rotate(-8deg);transform-origin:50% 100%}
+
+/* Keep farmland labels level and lift every active explanation above map features. */
+.overview-farm-feature>.overview-feature-tooltip{transform:translate(-50%,-100%) rotate(8deg);transform-origin:50% 100%}
+.overview-river-feature:hover,.overview-river-feature:focus-visible,.overview-farm-feature:hover,.overview-farm-feature:focus-visible,.overview-pollution-feature:hover,.overview-pollution-feature:focus-visible,.overview-mine-feature:hover,.overview-mine-feature:focus-visible,.overview-alert-marker:hover,.overview-alert-marker:focus-visible{z-index:60}
