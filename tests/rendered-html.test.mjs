@@ -184,3 +184,16 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.match(css, /\.environmental-workflow-card/);
   assert.match(css, /@media\(max-width:800px\).*\.environmental-workflow-card/s);
 });
+
+test("lets content cards grow without clipping translated or zoomed text", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const resilienceRules = css.match(/Content-height resilience[\s\S]*$/)?.[0] ?? "";
+
+  assert.match(resilienceRules, /\.module-kpis article\{height:auto;min-height:96px/);
+  assert.match(resilienceRules, /\.license-stats article\{height:auto;min-height:78px/);
+  assert.match(resilienceRules, /\.module-main>article\{height:auto;min-height:385px/);
+  assert.match(resilienceRules, /\.exploration-summary-grid-v2>article\{height:auto;min-height:365px/);
+  assert.match(resilienceRules, /\.environmental-workflow-card,\.environmental-obligations-card\{height:auto;min-height:250px/);
+  assert.match(resilienceRules, /\.environmental-obligations-card>div:last-child>span\{min-height:42px/);
+  assert.match(resilienceRules, /@media\(max-width:800px\)\{\.environmental-workflow-card\{min-height:500px\}/);
+});

@@ -60,3 +60,12 @@
 @media(max-width:1100px){.environmental-command-grid{grid-template-columns:1fr}.environmental-map-panel{height:660px}.environmental-command-side{height:auto;grid-template-columns:1.15fr .85fr;grid-template-rows:400px}.environmental-workflow-grid{grid-template-columns:1fr}.environmental-workflow-card,.environmental-obligations-card{height:auto;min-height:220px}}
 @media(max-width:800px){.environmental-map-panel{height:auto}.environmental-command-side{grid-template-columns:1fr;grid-template-rows:420px 250px}.environmental-action-panel{grid-template-rows:58px 39px repeat(3,minmax(0,1fr)) 35px}.environmental-action-item span>small{display:block}.environmental-workflow-card>div:last-child{height:auto;grid-template-columns:1fr;padding:9px}.environmental-workflow-card>div:last-child>span{min-height:83px;border-right:1px solid #dde6eb;border-bottom:0}.environmental-workflow-card>div:last-child>span:last-child{border-bottom:1px solid #dde6eb}.environmental-workflow-card>div:last-child em{right:auto;left:50%;top:auto;bottom:-11px;transform:rotate(90deg)}.environmental-workflow-card{min-height:500px}}
 .overview-alert-glyph{display:grid;place-items:center;width:100%;height:100%;transform:rotate(45deg);color:#fff;font-size:11px;line-height:1}
+
+/* Content-height resilience — text cards grow instead of clipping at zoom or in translation. */
+.module-kpis article{height:auto;min-height:96px;padding:12px 12px 14px}.module-kpis span{line-height:1.35}.module-kpis small{display:block;line-height:1.35;margin-top:2px}
+.license-stats article{height:auto;min-height:78px}.license-stats span{line-height:1.35}
+.module-main>article{height:auto;min-height:385px}.lower-grid .panel{height:auto;min-height:214px}
+.disclaimer{height:auto;min-height:49px;padding:10px 14px}
+.exploration-summary-grid>article,.exploration-summary-grid .evidence-panel{height:auto;min-height:358px}.exploration-summary-grid-v2>article{height:auto;min-height:365px}
+.environmental-workflow-card,.environmental-obligations-card{height:auto;min-height:250px}.environmental-workflow-card>div:last-child{height:auto;min-height:191px}.environmental-obligations-card>div:last-child{padding:10px 13px 13px}.environmental-obligations-card>div:last-child>span{min-height:42px}
+@media(max-width:800px){.environmental-workflow-card{min-height:500px}.environmental-obligations-card{min-height:250px}}
