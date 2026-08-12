@@ -159,7 +159,7 @@ test("keeps the English source while switching through multiple languages", asyn
   assert.equal(current, "证据图层");
 });
 
-test("completes the Environmental & Social monitoring workspace", async () => {
+test("completes the environment-only monitoring workspace", async () => {
   const [page, css] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -173,8 +173,12 @@ test("completes the Environmental & Social monitoring workspace", async () => {
   assert.match(page, /Environmental alerts requiring action/);
   assert.match(page, /From alert to verified conclusion/);
   assert.match(page, /Permits, inspections and monitoring records/);
+  assert.match(page, /className="overview-alert-glyph"/);
   assert.match(page, /kind=\{page==="exploration" \? "exploration" : page==="environment" \? "environment" : "record"\}/);
-  assert.match(css, /Environmental & Social — Environment 1 dedicated monitoring workspace/);
+  const environmentBlock = page.match(/function EnvironmentModule[\s\S]*?\n}\n\ntype ExplorationReadout/)?.[0] ?? "";
+  assert.doesNotMatch(environmentBlock, /Community commitments|Resettlement cases|Local employment|Environmental & Social/);
+  assert.match(css, /Environmental Monitoring — Environment 1 dedicated monitoring workspace/);
+  assert.match(css, /\.overview-alert-glyph\{[^}]*transform:rotate\(45deg\)/);
   assert.match(css, /\.environmental-command-grid/);
   assert.match(css, /\.environmental-action-panel/);
   assert.match(css, /\.environmental-workflow-card/);

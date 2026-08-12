@@ -14,7 +14,7 @@ const navigation = [
   ["export", "↗", "Export & Corridors"],
   ["revenue", "₣", "Pricing & Revenue"],
   ["infrastructure", "⌁", "Infrastructure & Supply Chain"],
-  ["environment", "♧", "Environmental & Social"],
+  ["environment", "♧", "Environmental Monitoring"],
   ["alerts", "△", "Alerts & Risk Center"],
   ["quality", "◫", "Data Quality & Sources"],
   ["reports", "⇩", "Reports & Exports"],
@@ -245,14 +245,14 @@ const moduleSpecs: Record<Exclude<PageKey, "overview" | "exploration" | "license
     notice: "Single points of failure: North Rail segment 4, Kankan Substation, and the Forest Belt seasonal road crossing.",
   },
   environment: {
-    title: "Environmental & Social Monitoring",
-    subtitle: "Environmental permits, inspections, obligations, community impacts, and social commitments related to mining activity.",
-    kicker: "PERMITS, IMPACTS & COMMITMENTS", accent: "green",
-    kpis: [["Valid permits","39","82% coverage"],["Expiring soon","7","Within 90 days"],["Inspections overdue","11","4 high priority"],["Active violations","8","2 severe"],["Commitments overdue","19","Across 7 projects"],["Resettlement cases","6","312 households"],["Local employment","67%","Reported average"],["Data coverage","74%","3 agencies delayed"]],
-    primary: "Environmental constraints & monitoring map", secondary: "Social commitments",
+    title: "Environmental Monitoring",
+    subtitle: "Environmental permits, inspections, water monitoring, pollution screening, rehabilitation, and environmental obligations related to mining activity.",
+    kicker: "PERMITS, IMPACTS & MONITORING", accent: "green",
+    kpis: [["Valid permits","39","82% coverage"],["Expiring soon","7","Within 90 days"],["Inspections overdue","11","4 high priority"],["Active violations","8","2 severe"],["Water monitoring sites","19","14 current"],["Rehabilitation plans","39","31 approved"],["Pollution alerts","3","1 critical"],["Environmental data coverage","74%","3 agencies delayed"]],
+    primary: "Environmental constraints & monitoring map", secondary: "Environmental obligations",
     columns: ["Project","Operator","Permit","Issue date","Expiry","Latest inspection","Water monitoring","Rehabilitation","Incidents","Status"],
     rows: [["North Ridge","Alpha Mining","ENV-2023-044","12 May 2023","11 May 2027","18 Jun 2026","Current","Approved","0","Compliant"],["Forest Belt","WAM","ENV-2021-018","08 Feb 2021","07 Aug 2026","Overdue","Delayed","Review","2","Action required"],["Fouta Central","Koba Resources","ENV-2025-071","24 Mar 2025","23 Mar 2028","02 Jul 2026","Current","Draft","0","Compliant"]],
-    notice: "Environmental and social information may be incomplete or held by separate agencies. Coverage and source limitations are shown with every conclusion.",
+    notice: "Environmental information may be incomplete or held by separate agencies. Coverage and source limitations are shown with every conclusion.",
   },
   alerts: {
     title: "Alerts & Risk Center",
@@ -371,7 +371,7 @@ function DetailDrawer({ name, onClose, kind = "record" }: { name: string; onClos
           </div>
           <section><h4>Potential impact</h4><p>This demonstration record identifies a possible pathway between mining activity, surface water, and nearby farmland.</p></section>
           <section><h4>Evidence currently available</h4><ul><li>Map-based proximity screening</li><li>Illustrative water and sediment observations</li><li>Environmental permit and inspection records</li></ul></section>
-          <section><h4>Affected features</h4><p>Potentially affected rivers, agricultural areas, communities, and downstream monitoring points are shown on the environmental map.</p></section>
+          <section><h4>Affected features</h4><p>Potentially affected rivers, agricultural areas, watersheds, and downstream monitoring points are shown on the environmental map.</p></section>
           <section><h4>Required action</h4><p><b>Complete field sampling and agency review</b> before changing the alert status or reaching an environmental conclusion.</p></section>
           <section><h4>Limitations</h4><p>This is demonstration data. It is not a real contamination finding and must not be used as evidence of environmental harm.</p></section>
         </>
@@ -521,7 +521,7 @@ function OverviewRiskMap() {
                 onFocus={() => focusFeature(feature)} onBlur={clearFeature}
                 aria-label={`${alert.level} alert: ${alert.title}`}
               >
-                !
+                <b className="overview-alert-glyph" aria-hidden>!</b>
                 <span className="overview-feature-tooltip"><b>{alert.title}</b><small>{alert.affected}</small><em>{alert.coordinates}</em></span>
               </button>
             );
@@ -593,14 +593,14 @@ function Overview() {
 const environmentalMonitoringMetrics = [
   { label: "Water sampling coverage", value: "72%", detail: "14 of 19 monitoring sites current", tone: "blue" },
   { label: "Rehabilitation inspections", value: "68%", detail: "11 inspections overdue", tone: "amber" },
-  { label: "Community commitments", value: "81%", detail: "19 obligations overdue", tone: "purple" },
+  { label: "Pollution alert response", value: "100%", detail: "3 of 3 alerts assigned for review", tone: "purple" },
   { label: "Environmental permit coverage", value: "82%", detail: "7 expire within 90 days", tone: "green" },
 ];
 
 function EnvironmentModule({ onOpen }: { onOpen: (name: string) => void }) {
   const spec = moduleSpecs.environment;
   return <>
-    <header className="page-heading environmental-heading"><div><div className="breadcrumb green">ENVIRONMENTAL & SOCIAL <span>/</span> NATIONAL MONITORING</div><h1>{spec.title}</h1><p>{spec.subtitle}</p></div><div className="heading-actions"><button className="select-btn">Current year⌄</button><button className="select-btn">All regions⌄</button><button className="primary">⇩ Export view</button></div></header>
+    <header className="page-heading environmental-heading"><div><div className="breadcrumb green">ENVIRONMENTAL MONITORING <span>/</span> NATIONAL VIEW</div><h1>{spec.title}</h1><p>{spec.subtitle}</p></div><div className="heading-actions"><button className="select-btn">Current year⌄</button><button className="select-btn">All regions⌄</button><button className="primary">⇩ Export view</button></div></header>
 
     <div className="module-kpis environmental-kpis">{spec.kpis.map((item,index) => <article className="panel" key={item[0]}><span>{item[0]}</span><b>{item[1]}</b><small className={index === 1 || index === 2 || index === 3 || index === 4 ? "amber" : "green"}>{item[2]}</small></article>)}</div>
 
@@ -629,7 +629,7 @@ function EnvironmentModule({ onOpen }: { onOpen: (name: string) => void }) {
 
     <section className="environmental-workflow-grid">
       <article className="panel environmental-workflow-card"><div className="panel-head"><div><span className="section-kicker blue">FIELD VERIFICATION WORKFLOW</span><h3>From alert to verified conclusion</h3></div></div><div>{[["1","Screen","Map proximity and source records"],["2","Sample","Water, sediment, soil and control sites"],["3","Validate","Laboratory QA/QC and coordinate checks"],["4","Review","Environmental agency and technical review"],["5","Decide","Close, monitor, mitigate or escalate"]].map((step,index) => <span key={step[0]}><i>{step[0]}</i><b>{step[1]}</b><small>{step[2]}</small>{index < 4 && <em>→</em>}</span>)}</div></article>
-      <article className="panel environmental-obligations-card"><div className="panel-head"><div><span className="section-kicker amber">OBLIGATION STATUS</span><h3>Permits, inspections & commitments</h3></div></div><div>{[["Environmental permits","39 valid · 7 expiring","82%"],["Inspection programme","28 completed · 11 overdue","72%"],["Rehabilitation plans","31 approved · 8 in review","79%"],["Community commitments","76 current · 19 overdue","80%"]].map(item => <span key={item[0]}><b>{item[0]}</b><small>{item[1]}</small><i><em style={{width:item[2]}}/></i><strong>{item[2]}</strong></span>)}</div></article>
+      <article className="panel environmental-obligations-card"><div className="panel-head"><div><span className="section-kicker amber">OBLIGATION STATUS</span><h3>Permits, inspections & rehabilitation</h3></div></div><div>{[["Environmental permits","39 valid · 7 expiring","82%"],["Inspection programme","28 completed · 11 overdue","72%"],["Rehabilitation plans","31 approved · 8 in review","79%"],["Water monitoring stations","14 current · 5 require sampling","74%"]].map(item => <span key={item[0]}><b>{item[0]}</b><small>{item[1]}</small><i><em style={{width:item[2]}}/></i><strong>{item[2]}</strong></span>)}</div></article>
     </section>
 
     <div className="module-notice environmental-source-notice"><b>i</b><span>{spec.notice}</span></div>
