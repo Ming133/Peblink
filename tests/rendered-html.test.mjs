@@ -193,7 +193,11 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.match(page, /Boké 72-hour Runoff Hotspot/);
   assert.match(page, /environmentTimeOptions/);
   assert.match(page, /investigationStatuses/);
-  assert.match(page, /setSelectedFeature\(feature\)/);
+  assert.match(page, /const selectFeature = \(feature: OverviewMapFeature\)/);
+  assert.match(page, /if \(current\?\.id === feature\.id\)[\s\S]*?setDismissedFeatureId\(feature\.id\)[\s\S]*?return null/);
+  assert.match(page, /target\.closest\("\[data-map-feature='true'\], \.overview-zoom-tools, \.overview-map-legend, \.overview-demo-badge"\)/);
+  assert.match(page, /data-map-feature="true"/);
+  assert.match(page, /map-feature-dismissed/);
   assert.match(page, /aria-pressed=\{isSelected\(feature\)\}/);
   assert.match(page, /Risk<\/strong> \{feature\.risk\}/);
   assert.match(page, /Confidence<\/strong> \{feature\.confidence\}/);
@@ -218,6 +222,7 @@ test("completes the environment-only monitoring workspace", async () => {
   assert.match(css, /\.environment-boundaries-feature/);
   assert.match(css, /\.environment-rainfall-feature/);
   assert.match(css, /\.map-feature-selected>\.overview-feature-tooltip/);
+  assert.match(css, /\.map-feature-dismissed:hover>\.overview-feature-tooltip[^{]*\{opacity:0!important;visibility:hidden!important\}/);
   assert.match(css, /:has\(\.map-feature-selected\) \.overview-map-canvas\{z-index:30\}/);
   assert.match(css, /@media\(max-width:800px\).*\.environmental-workflow-card/s);
 });

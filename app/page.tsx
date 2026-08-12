@@ -484,6 +484,7 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
   });
   const [hoveredFeature, setHoveredFeature] = useState<OverviewMapFeature | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<OverviewMapFeature | null>(null);
+  const [dismissedFeatureId, setDismissedFeatureId] = useState<string | null>(null);
   const [timePeriod, setTimePeriod] = useState<EnvironmentTime>("current");
   const [investigationStatus, setInvestigationStatus] = useState<"All statuses" | InvestigationStatus>("All statuses");
   const layerOptions = environmentalMode ? environmentLayerOptions : overviewLayerOptions;
@@ -507,10 +508,27 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
     setZoom(current => Math.min(2, Math.max(0.8, Number((current + amount).toFixed(1)))));
   };
 
-  const focusFeature = (feature: OverviewMapFeature) => setHoveredFeature(feature);
-  const clearFeature = () => setHoveredFeature(null);
-  const selectFeature = (feature: OverviewMapFeature) => setSelectedFeature(feature);
+  const focusFeature = (feature: OverviewMapFeature) => {
+    setDismissedFeatureId(null);
+    setHoveredFeature(feature);
+  };
+  const clearFeature = () => {
+    setHoveredFeature(null);
+    setDismissedFeatureId(null);
+  };
+  const selectFeature = (feature: OverviewMapFeature) => {
+    setSelectedFeature(current => {
+      if (current?.id === feature.id) {
+        setDismissedFeatureId(feature.id);
+        setHoveredFeature(null);
+        return null;
+      }
+      setDismissedFeatureId(null);
+      return feature;
+    });
+  };
   const isSelected = (feature: OverviewMapFeature) => selectedFeature?.id === feature.id;
+  const isDismissed = (feature: OverviewMapFeature) => dismissedFeatureId === feature.id;
   const matchesTime = (feature: OverviewMapFeature) => !feature.periods || feature.periods.includes(timePeriod);
   const pollutionFeatures = environmentalMode
     ? environmentInvestigationData.filter(feature => matchesTime(feature) && (investigationStatus === "All statuses" || feature.status === investigationStatus))
@@ -522,7 +540,8 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
     const transform = layer === "flow" ? `rotate(${rotated}deg)` : feature.angle ? `translate(-50%, -50%) rotate(${rotated}deg)` : undefined;
     return <button
       key={feature.id}
-      className={`environment-map-feature environment-${layer}-feature ${feature.variant || ""} ${isSelected(feature) ? "map-feature-selected" : ""}`}
+      className={`environment-map-feature environment-${layer}-feature ${feature.variant || ""} ${isSelected(feature) ? "map-feature-selected" : ""} ${isDismissed(feature) ? "map-feature-dismissed" : ""}`}
+      data-map-feature="true"
       style={{ left: `${feature.x}%`, top: `${feature.y}%`, width: feature.width ? `${feature.width}%` : undefined, height: feature.height ? `${feature.height}%` : undefined, transform }}
       onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
       onFocus={() => focusFeature(feature)} onBlur={clearFeature}
@@ -566,7 +585,13 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
         </div>}
       </div>
 
-      <div className="overview-map-stage" onClick={event => { if (event.target === event.currentTarget) setSelectedFeature(null); }}>
+      <div className="overview-map-stage" onClick={event => {
+        const target = event.target as HTMLElement;
+        if (target.closest("[data-map-feature='true'], .overview-zoom-tools, .overview-map-legend, .overview-demo-badge")) return;
+        setSelectedFeature(null);
+        setHoveredFeature(null);
+        setDismissedFeatureId(null);
+      }}>
         <div className="overview-zoom-tools" aria-label="Map zoom controls">
           <button onClick={() => changeZoom(0.2)} disabled={zoom >= 2} aria-label="Zoom in">＋</button>
           <button onClick={() => changeZoom(-0.2)} disabled={zoom <= 0.8} aria-label="Zoom out">−</button>
@@ -590,7 +615,8 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
           {layers.rivers && overviewMapData.rivers.map(feature => (
             <button
               key={feature.id}
-              className={`overview-river-feature ${isSelected(feature) ? "map-feature-selected" : ""}`}
+              className={`overview-river-feature ${isSelected(feature) ? "map-feature-selected" : ""} ${isDismissed(feature) ? "map-feature-dismissed" : ""}`}
+              data-map-feature="true"
               style={{ left: `${feature.x}%`, top: `${feature.y}%`, width: `${feature.width}%`, transform: `rotate(${feature.angle}deg)` }}
               onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
               onFocus={() => focusFeature(feature)} onBlur={clearFeature}
@@ -609,7 +635,8 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
           {layers.farms && overviewMapData.farms.map(feature => (
             <button
               key={feature.id}
-              className={`overview-farm-feature ${feature.size || "medium"} ${isSelected(feature) ? "map-feature-selected" : ""}`}
+              className={`overview-farm-feature ${feature.size || "medium"} ${isSelected(feature) ? "map-feature-selected" : ""} ${isDismissed(feature) ? "map-feature-dismissed" : ""}`}
+              data-map-feature="true"
               style={{ left: `${feature.x}%`, top: `${feature.y}%` }}
               onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
               onFocus={() => focusFeature(feature)} onBlur={clearFeature}
@@ -624,7 +651,8 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
           {layers.pollution && pollutionFeatures.map(feature => (
             <button
               key={feature.id}
-              className={`overview-pollution-feature ${feature.size || "medium"} status-${feature.status?.toLowerCase().replaceAll(" ", "-") || "potential"} ${isSelected(feature) ? "map-feature-selected" : ""}`}
+              className={`overview-pollution-feature ${feature.size || "medium"} status-${feature.status?.toLowerCase().replaceAll(" ", "-") || "potential"} ${isSelected(feature) ? "map-feature-selected" : ""} ${isDismissed(feature) ? "map-feature-dismissed" : ""}`}
+              data-map-feature="true"
               style={{ left: `${feature.x}%`, top: `${feature.y}%` }}
               onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
               onFocus={() => focusFeature(feature)} onBlur={clearFeature}
@@ -639,7 +667,8 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
           {layers.mines && overviewMapData.mines.map(feature => (
             <button
               key={feature.id}
-              className={`overview-mine-feature ${isSelected(feature) ? "map-feature-selected" : ""}`}
+              className={`overview-mine-feature ${isSelected(feature) ? "map-feature-selected" : ""} ${isDismissed(feature) ? "map-feature-dismissed" : ""}`}
+              data-map-feature="true"
               style={{ left: `${feature.x}%`, top: `${feature.y}%` }}
               onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
               onFocus={() => focusFeature(feature)} onBlur={clearFeature}
@@ -659,7 +688,8 @@ function OverviewRiskMap({ environmentalMode = false }: { environmentalMode?: bo
             return (
               <button
                 key={alert.id}
-                className={`overview-alert-marker alert-${alert.color} ${isSelected(feature) ? "map-feature-selected" : ""}`}
+                className={`overview-alert-marker alert-${alert.color} ${isSelected(feature) ? "map-feature-selected" : ""} ${isDismissed(feature) ? "map-feature-dismissed" : ""}`}
+                data-map-feature="true"
                 style={{ left: `${alertPositions[index].x}%`, top: `${alertPositions[index].y}%` }}
                 onMouseEnter={() => focusFeature(feature)} onMouseLeave={clearFeature}
                 onFocus={() => focusFeature(feature)} onBlur={clearFeature}

@@ -88,3 +88,4 @@
 @media(max-width:800px){.environmental-command-side{grid-template-columns:1fr;grid-template-rows:460px 300px}}
 .environment-samples-feature.sample-soil{background:#8a6428}.environment-samples-feature.sample-sediment{background:#755690}
 .environment-watersheds-feature.map-feature-selected:not(:hover):not(:focus-visible)>.overview-feature-tooltip{opacity:0!important;visibility:hidden!important}
+.map-feature-dismissed>.overview-feature-tooltip,.map-feature-dismissed:hover>.overview-feature-tooltip,.map-feature-dismissed:focus-visible>.overview-feature-tooltip{opacity:0!important;visibility:hidden!important}
